@@ -1,0 +1,27 @@
+{
+  "name": "sentinel-ai-backend",
+  "version": "1.0.0",
+  "description": "Backend API for SentinelAI Cyber Defense Platform",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^4.20.1",
+    "multer": "^1.4.5-lts.1",
+    "morgan": "^1.10.0",
+    "helmet": "^7.1.0",
+    "validator": "^13.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
