@@ -1,51 +1,54 @@
-function MainLayout({ children }) {
-  console.log('MainLayout rendering')
+import Sidebar from '../components/Sidebar'
+import Topbar from '../components/Topbar'
+import { Toaster } from 'react-hot-toast'
+import { useState } from 'react'
 
-  try {
-    return (
-      <div className="min-h-screen bg-[#0a0e27] w-full" style={{ minHeight: '100vh', width: '100%', color: 'white', display: 'flex' }}>
-        <div className="relative w-[270px] bg-gradient-to-b from-slate-900 to-slate-800 border-r border-purple-500/20 shadow-[0_0_20px_rgba(139,69,19,0.3)]">
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 via-transparent to-cyan-500/10" />
-          <div className="relative p-6">
-            <div className="mb-8">
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent mb-2">SentinelAI</h3>
-              <p className="text-xs text-slate-400">Cyber Defense Platform</p>
-            </div>
-            <nav className="space-y-2">
-              <div className="px-4 py-3 rounded-lg bg-gradient-to-r from-cyan-500/20 to-purple-500/20 border border-cyan-500/30 text-cyan-300 cursor-pointer hover:bg-cyan-500/30 transition-colors">
-                <p className="text-sm font-semibold">Dashboard</p>
-              </div>
-              <div className="px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-300 cursor-pointer">
-                <p className="text-sm">Threat Overview</p>
-              </div>
-              <div className="px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-300 cursor-pointer">
-                <p className="text-sm">AI Defense Bot</p>
-              </div>
-              <div className="px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-300 cursor-pointer">
-                <p className="text-sm">AI Guardian</p>
-              </div>
-              <div className="px-4 py-3 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-300 cursor-pointer">
-                <p className="text-sm">Deepfake Detector</p>
-              </div>
-            </nav>
-            <div className="absolute bottom-6 left-6 right-6">
-              <div className="text-center">
-                <div className="w-10 h-1.5 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full mx-auto mb-2 animate-pulse" />
-                <p className="text-xs text-slate-500">AI Systems Online</p>
-              </div>
-            </div>
+function MainLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-[#0a0e27] w-full flex">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <div className="flex-1 ml-[270px] flex flex-col">
+        {/* Topbar */}
+        <Topbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            {children}
           </div>
-        </div>
-        <main className="flex-1 p-8" style={{ backgroundColor: '#0a0e27' }}>
-          {console.log('Rendering children')}
-          {children}
         </main>
       </div>
-    )
-  } catch (error) {
-    console.error('Error in MainLayout:', error)
-    return <div style={{ color: 'red', padding: '20px', background: 'white' }}>Error in MainLayout: {error.message}</div>
-  }
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1e293b',
+            color: '#e2e8f0',
+            border: '1px solid rgba(155, 91, 255, 0.3)',
+            borderRadius: '12px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+    </div>
+  )
 }
 
 export default MainLayout

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 
 function Card({ children, className = '', hover = false }) {
-  const baseClasses = 'bg-white rounded-xl border border-slate-200 shadow-soft p-6'
+  const baseClasses = 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-glow p-6'
   
   if (hover) {
     return (

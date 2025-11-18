@@ -139,3 +139,99 @@ export const deleteThreat = async (req, res) => {
     res.status(500).json({ message: 'Server error deleting threat' })
   }
 }
+
+export const getHeatmap = async (req, res) => {
+  try {
+    // Mock heatmap data with region intensities
+    const heatmapData = {
+      regions: [
+        { region: 'North America', threatLevel: 'Critical', intensity: 85, attacks: 3240 },
+        { region: 'Europe', threatLevel: 'High', intensity: 72, attacks: 2850 },
+        { region: 'Asia', threatLevel: 'Critical', intensity: 91, attacks: 4100 },
+        { region: 'Middle East', threatLevel: 'High', intensity: 68, attacks: 2230 },
+        { region: 'South America', threatLevel: 'Medium', intensity: 54, attacks: 1850 },
+        { region: 'Africa', threatLevel: 'Medium', intensity: 43, attacks: 1620 },
+        { region: 'Oceania', threatLevel: 'Low', intensity: 29, attacks: 890 }
+      ],
+      totalGlobalAttacks: 16880,
+      lastUpdated: new Date().toISOString()
+    }
+
+    res.json(heatmapData)
+  } catch (error) {
+    console.error('Get heatmap error:', error)
+    res.status(500).json({ message: 'Server error fetching heatmap data' })
+  }
+}
+
+export const getSeverityStats = async (req, res) => {
+  try {
+    res.json(threatOverviewData.severityLevels)
+  } catch (error) {
+    console.error('Get severity stats error:', error)
+    res.status(500).json({ message: 'Server error fetching severity stats' })
+  }
+}
+
+export const getTrends = async (req, res) => {
+  try {
+    res.json(threatOverviewData.monthlyTrend)
+  } catch (error) {
+    console.error('Get trends error:', error)
+    res.status(500).json({ message: 'Server error fetching trends data' })
+  }
+}
+
+export const getThreatFeed = async (req, res) => {
+  try {
+    const threatFeed = threatOverviewData.recentAttacks.map(attack => ({
+      ...attack,
+      severity: attack.level,
+      source: attack.source,
+      target: 'Corporate Network',
+      vector: attack.type,
+      timestamp: attack.timestamp
+    }))
+
+    res.json({ threats: threatFeed })
+  } catch (error) {
+    console.error('Get threat feed error:', error)
+    res.status(500).json({ message: 'Server error fetching threat feed' })
+  }
+}
+
+export const getMitreMatrix = async (req, res) => {
+  try {
+    res.json({ techniques: threatOverviewData.mitreFindings })
+  } catch (error) {
+    console.error('Get MITRE matrix error:', error)
+    res.status(500).json({ message: 'Server error fetching MITRE matrix' })
+  }
+}
+
+export const getCorrelationEngine = async (req, res) => {
+  try {
+    const correlations = {
+      connectedIOCs: [
+        { ioc: '192.168.1.100', type: 'IP', linkedThreats: 3, similarity: 0.95 },
+        { ioc: 'malicious-site.com', type: 'Domain', linkedThreats: 5, similarity: 0.87 },
+        { ioc: 'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3', type: 'Hash', linkedThreats: 2, similarity: 0.91 }
+      ],
+      attackClusters: [
+        { clusterId: 'CLUSTER-001', threatCount: 12, pattern: 'Brute Force Campaign', confidence: 0.89 },
+        { clusterId: 'CLUSTER-002', threatCount: 8, pattern: 'Phishing Wave', confidence: 0.94 },
+        { clusterId: 'CLUSTER-003', threatCount: 15, pattern: 'Malware Distribution', confidence: 0.76 }
+      ],
+      patternSimilarity: [
+        { pattern: 'SQL Injection Patterns', matchCount: 23, similarityScore: 0.82 },
+        { pattern: 'PowerShell Scripts', matchCount: 34, similarityScore: 0.78 },
+        { pattern: 'Credential Stuffing', matchCount: 18, similarityScore: 0.91 }
+      ]
+    }
+
+    res.json(correlations)
+  } catch (error) {
+    console.error('Get correlation engine error:', error)
+    res.status(500).json({ message: 'Server error fetching correlation data' })
+  }
+}

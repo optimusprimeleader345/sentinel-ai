@@ -1,27 +1,16 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  LayoutDashboard,
-  Shield,
-  Brain,
-  Bot,
-  Scan,
-  FileQuestion,
-  Lock,
-  AlertTriangle,
-  Globe,
-  Award,
-  GraduationCap,
-  HelpCircle,
-  BarChart3,
-  User,
-} from 'lucide-react'
+import { Shield, User, Bot } from 'lucide-react'
+
+function IconPlaceholder() {
+  return <span style={{ fontSize: '12px', color: '#cbd5e1' }}>●</span>
+}
 
 const navigationGroups = [
   {
     title: 'MAIN',
     items: [
-      { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { path: '/dashboard', icon: IconPlaceholder, label: 'Dashboard' },
       { path: '/threat-overview', icon: Shield, label: 'Threat Overview' },
     ],
   },
@@ -29,53 +18,60 @@ const navigationGroups = [
     title: 'AI DEFENSE',
     items: [
       { path: '/ai-defense-bot', icon: Bot, label: 'AI Defense Bot' },
-      { path: '/ai-guardian', icon: Brain, label: 'AI Guardian' },
+      { path: '/ai-guardian', icon: IconPlaceholder, label: 'AI Guardian' },
+      { path: '/defense-playbooks', icon: IconPlaceholder, label: 'Defense Playbooks' },
+      { path: '/threat-prediction', icon: IconPlaceholder, label: 'Threat Prediction AI' },
     ],
   },
   {
     title: 'SCANNER',
     items: [
-      { path: '/scan-center', icon: Scan, label: 'Scan Center' },
-      { path: '/deepfake-detector', icon: FileQuestion, label: 'Deepfake Detector' },
-      { path: '/secure-vault', icon: Lock, label: 'Secure Vault' },
+      { path: '/scan-center', icon: IconPlaceholder, label: 'Scan Center' },
+      { path: '/deepfake-detector', icon: IconPlaceholder, label: 'Deepfake Detector' },
+      { path: '/secure-vault', icon: IconPlaceholder, label: 'Secure Vault' },
     ],
   },
   {
     title: 'INTEL',
     items: [
-      { path: '/threat-intel', icon: AlertTriangle, label: 'Threat Intel' },
-      { path: '/darkweb-monitor', icon: Globe, label: 'Dark Web Monitor' },
+      { path: '/threat-intel', icon: IconPlaceholder, label: 'Threat Intel' },
+      { path: '/darkweb-monitor', icon: IconPlaceholder, label: 'Dark Web Monitor' },
+      { path: '/ai-log-analyzer', icon: IconPlaceholder, label: 'AI Log Analyzer' },
+      { path: '/behavior-analytics', icon: IconPlaceholder, label: 'Behavior Analytics' },
+      { path: '/incident-response', icon: IconPlaceholder, label: 'Incident Response' },
+      { path: '/attack-simulation', icon: IconPlaceholder, label: 'Attack Simulation' },
     ],
   },
   {
     title: 'SCORE',
     items: [
-      { path: '/security-score', icon: Award, label: 'Security Score' },
+      { path: '/security-score', icon: IconPlaceholder, label: 'Security Score' },
+      { path: '/zero-trust', icon: IconPlaceholder, label: 'Zero Trust Analyzer' },
+      { path: '/compliance', icon: IconPlaceholder, label: 'Compliance Center' },
     ],
   },
   {
     title: 'EDUCATION',
     items: [
-      { path: '/education', icon: GraduationCap, label: 'Cyber Education' },
+      { path: '/education', icon: IconPlaceholder, label: 'Cyber Education' },
     ],
   },
   {
     title: 'SUPPORT',
     items: [
-      { path: '/support', icon: HelpCircle, label: 'Customer Support' },
+      { path: '/support', icon: IconPlaceholder, label: 'Customer Support' },
     ],
   },
   {
     title: 'REPORTS',
     items: [
-      { path: '/reports', icon: BarChart3, label: 'Analytics & Insights' },
+      { path: '/reports', icon: IconPlaceholder, label: 'Analytics & Insights' },
+      { path: '/reporting-center', icon: IconPlaceholder, label: 'Reporting Center' },
     ],
   },
 ]
 
 function Sidebar() {
-  console.log('Sidebar rendering')
-  
   return (
     <aside 
       className="fixed left-0 top-0 h-screen w-[270px] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col z-50"

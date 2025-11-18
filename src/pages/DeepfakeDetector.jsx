@@ -1,19 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import {
-  FileQuestion,
-  Upload,
-  Play,
-  Shield,
-  Eye,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  MessageSquare,
-  Zap,
-  ThumbsUp,
-  ThumbsDown
-} from 'lucide-react'
+import { Camera, Upload, Shield, AlertTriangle, ThumbsUp, ThumbsDown } from "lucide-react";
 import { deepfakeAPI } from '../lib/api.js'
 import {
   analyzeDeepfake,

@@ -13,6 +13,11 @@ import systemRoutes from './routes/systemRoutes.js'
 import scanRoutes from './routes/scanRoutes.js'
 import logRoutes from './routes/logRoutes.js'
 import deepfakeRoutes from './routes/deepfakeRoutes.js'
+import securityScoreRoutes from './routes/securityScoreRoutes.js'
+import zeroTrustRoutes from './routes/zeroTrustRoutes.js'
+import incidentRoutes from './routes/incidentRoutes.js'
+import simulationRoutes from './routes/simulationRoutes.js'
+import playbookRoutes from './routes/playbookRoutes.js'
 import vaultRoutes from './routes/vaultRoutes.js'
 import intelRoutes from './routes/intelRoutes.js'
 import darkwebRoutes from './routes/darkwebRoutes.js'
@@ -21,6 +26,13 @@ import supportRoutes from './routes/supportRoutes.js'
 import securityRoutes from './routes/securityRoutes.js'
 import guardianRoutes from './routes/guardianRoutes.js'
 import defenseRoutes from './routes/defenseRoutes.js'
+import predictionRoutes from './routes/predictionRoutes.js'
+import behaviorRoutes from './routes/behaviorRoutes.js'
+import reportRoutes from './routes/reportRoutes.js'
+import threatIntelRoutes from './routes/threatIntelRoutes.js'
+import complianceRoutes from './routes/complianceRoutes.js'
+import aiDefenseRoutes from './routes/aiDefenseRoutes.js'
+import aiGuardianRoutes from './routes/aiGuardianRoutes.js'
 
 // Load environment variables
 dotenv.config()
@@ -58,6 +70,11 @@ app.use('/api/system', systemRoutes)
 app.use('/api/scan', scanRoutes)
 app.use('/api/logs', logRoutes)
 app.use('/api/deepfake', deepfakeRoutes)
+app.use('/api/security-score', securityScoreRoutes)
+app.use('/api/zero-trust', zeroTrustRoutes)
+app.use('/api/incident', incidentRoutes)
+app.use('/api/simulation', simulationRoutes)
+app.use('/api/playbooks', playbookRoutes)
 app.use('/api/vault', vaultRoutes)
 app.use('/api/intel', intelRoutes)
 app.use('/api/darkweb', darkwebRoutes)
@@ -66,6 +83,13 @@ app.use('/api/support', supportRoutes)
 app.use('/api/security', securityRoutes)
 app.use('/api/guardian', guardianRoutes)
 app.use('/api/defense', defenseRoutes)
+app.use('/api/prediction', predictionRoutes)
+app.use('/api/reports', reportRoutes)
+app.use('/api/threat-intel', threatIntelRoutes)
+app.use('/api/compliance', complianceRoutes)
+app.use('/api/ai-defense', aiDefenseRoutes)
+app.use('/api/ai-guardian', aiGuardianRoutes)
+app.use('/behavior', behaviorRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {

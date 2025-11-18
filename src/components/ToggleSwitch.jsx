@@ -4,13 +4,13 @@ function ToggleSwitch({ enabled, onChange, label, description }) {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-slate-900">{label}</p>
-        {description && <p className="text-xs text-slate-500">{description}</p>}
+        <p className="text-sm font-medium text-slate-200">{label}</p>
+        {description && <p className="text-xs text-slate-400">{description}</p>}
       </div>
       <button
         onClick={onChange}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          enabled ? 'bg-indigo-600' : 'bg-slate-200'
+          enabled ? 'bg-gradient-to-r from-purple-500 to-cyan-500' : 'bg-slate-600'
         }`}
       >
         <motion.span
@@ -24,4 +24,3 @@ function ToggleSwitch({ enabled, onChange, label, description }) {
 }
 
 export default ToggleSwitch
-

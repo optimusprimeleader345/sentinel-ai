@@ -79,64 +79,94 @@ export const threatOverviewData = {
 export const iocLookupData = {
   ip: {
     '192.168.1.100': {
-      reputation: 'High Risk',
       threatLevel: 'Critical',
+      reputationScore: 95,
+      asn: 'AS64496',
+      blacklistStatus: 'Listed in 8 blacklists',
       lastSeen: '2025-11-17T12:00:00Z',
       category: 'Command & Control',
       country: 'Russia',
       isp: 'Malicious Hosting Ltd',
-      tags: ['Malware C2', 'DDoS Source']
+      malwareHistory: ['Emotet', 'Trickbot', 'Ryuk'],
+      relatedThreats: ['Botnet C2', 'DDoS Attacks', 'Data Exfiltration'],
+      firstSeen: '2025-10-15T08:30:00Z',
+      tags: ['Malware C2', 'DDoS Source', 'Botnet']
     },
     '203.0.113.23': {
-      reputation: 'Suspicious',
       threatLevel: 'High',
+      reputationScore: 78,
+      asn: 'AS4837',
+      blacklistStatus: 'Listed in 5 blacklists',
       lastSeen: '2025-11-17T12:30:00Z',
       category: 'Malware Distribution',
       country: 'China',
       isp: 'Hostile Networks Inc',
-      tags: ['Troy Horse', 'File Sharing']
+      malwareHistory: ['Trojans', 'Ransomware'],
+      relatedThreats: ['File Sharing Malware', 'Drive-by Downloads'],
+      firstSeen: '2025-11-01T15:20:00Z',
+      tags: ['Trojan Horse', 'File Sharing', 'Malware Distribution']
     }
   },
   domain: {
     'malicious-site.com': {
-      reputation: 'High Risk',
       threatLevel: 'Critical',
+      reputationScore: 92,
+      asn: 'AS16509',
+      blacklistStatus: 'Listed in 12 blacklists',
       lastSeen: '2025-11-17T12:15:00Z',
       category: 'Phishing',
       registrar: 'Evil Domains LLC',
       nameServers: ['ns1.evil.com', 'ns2.evil.com'],
-      tags: ['Suspicious', 'Phishing', 'Credential Theft']
+      malwareHistory: ['Phishing Kits', 'Credential Harvesters'],
+      relatedThreats: ['Banking Fraud', 'Identity Theft', 'BEC Attacks'],
+      firstSeen: '2025-09-20T10:45:00Z',
+      tags: ['Phishing', 'Credential Theft', 'Scam']
     },
     'suspicious-bank.net': {
-      reputation: 'Medium Risk',
       threatLevel: 'Medium',
+      reputationScore: 65,
+      asn: 'AS14061',
+      blacklistStatus: 'Listed in 3 blacklists',
       lastSeen: '2025-11-17T12:10:00Z',
       category: 'Suspicious',
       registrar: 'Unknown',
       nameServers: ['ns1.unknown.org'],
-      tags: ['Potential Scam']
+      malwareHistory: [],
+      relatedThreats: ['Potential Banking Scam', 'Suspicious Activity'],
+      firstSeen: '2025-11-10T14:22:00Z',
+      tags: ['Potential Scam', 'Suspicious']
     }
   },
   hash: {
     'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3': {
-      reputation: 'High Risk',
       threatLevel: 'Critical',
+      reputationScore: 98,
+      asn: 'N/A',
+      blacklistStatus: 'Listed in 15 blacklists',
       lastSeen: '2025-11-17T12:20:00Z',
       type: 'SHA256',
       fileName: 'trojan.exe',
       fileSize: '245KB',
       category: 'Trojan',
-      tags: ['Banking Trojan', 'Keylogger', 'Ransomware']
+      malwareHistory: ['Banking Trojan', 'Keylogger', 'Ransomware Components'],
+      relatedThreats: ['Financial Fraud', 'Data Theft', 'System Compromise'],
+      firstSeen: '2025-08-05T09:15:00Z',
+      tags: ['Banking Trojan', 'Keylogger', 'Ransomware', 'Financial Malware']
     },
     'd41d8cd98f00b204e9800998ecf8427e': {
-      reputation: 'Safe',
       threatLevel: 'Low',
+      reputationScore: 5,
+      asn: 'N/A',
+      blacklistStatus: 'Not listed',
       lastSeen: '2025-11-17T12:05:00Z',
       type: 'MD5',
       fileName: 'safe-file.txt',
       fileSize: '1KB',
       category: 'Clean',
-      tags: ['Verified', 'Whitelisted']
+      malwareHistory: [],
+      relatedThreats: [],
+      firstSeen: '2025-11-17T12:05:00Z',
+      tags: ['Verified', 'Whitelisted', 'Clean']
     }
   }
 };
