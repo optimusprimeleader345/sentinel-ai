@@ -6,13 +6,26 @@ export const getThreats = async (req, res) => {
     const totalAttacks = threatOverviewData.totalAttacks24h + Math.floor(Math.random() * 50)
     const data = {
       ...threatOverviewData,
-      totalAttacks24h: totalAttacks
+      totalAttacks24h: totalAttacks,
+      // Ensure required properties are present
+      activeThreats: threatOverviewData.recentAttacks || [],
+      blockedAttacks: threatOverviewData.recentAttacks?.filter(attack => attack.level === 'High') || [],
+      recentEvents: threatOverviewData.recentAttacks || [],
+      riskLevel: threatOverviewData.criticalThreats > 5 ? 'HIGH' : threatOverviewData.criticalThreats > 2 ? 'MEDIUM' : 'LOW',
+      aiPredictions: threatOverviewData.aiRecommendations || []
     }
 
     res.json(data)
   } catch (error) {
     console.error('Get threat overview error:', error)
-    res.status(500).json({ message: 'Server error fetching threat overview' })
+    res.status(500).json({
+      message: 'Server error fetching threat overview',
+      activeThreats: [],
+      blockedAttacks: [],
+      recentEvents: [],
+      riskLevel: 'LOW',
+      aiPredictions: []
+    })
   }
 }
 

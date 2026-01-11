@@ -1,10 +1,18 @@
 import Sidebar from '../components/Sidebar'
 import Topbar from '../components/Topbar'
+import PersonalAIAssistant from '../components/PersonalAIAssistant'
+import UserAchievements from '../components/UserAchievements'
+import AlertPanel from '../components/AlertPanel'
+import AlertToast from '../components/AlertToast'
 import { Toaster } from 'react-hot-toast'
 import { useState } from 'react'
+import { useAlerts } from '../contexts/AlertContext'
 
 function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [assistantMinimized, setAssistantMinimized] = useState(true)
+  const [achievementsMinimized, setAchievementsMinimized] = useState(true)
+  const { alerts, isPanelOpen, markAsRead, markAllAsRead, clearAllAlerts } = useAlerts()
 
   return (
     <div className="min-h-screen bg-[#0a0e27] w-full flex">
@@ -47,6 +55,24 @@ function MainLayout({ children }) {
           },
         }}
       />
+
+      {/* Personal AI Assistant */}
+      <PersonalAIAssistant
+        isMinimized={assistantMinimized}
+        setIsMinimized={setAssistantMinimized}
+      />
+
+      {/* User Achievements */}
+      <UserAchievements
+        isMinimized={achievementsMinimized}
+        setIsMinimized={setAchievementsMinimized}
+      />
+
+      {/* Security Alert Panel */}
+      <AlertPanel />
+
+      {/* Critical Alert Toast */}
+      <AlertToast />
     </div>
   )
 }

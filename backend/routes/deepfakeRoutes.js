@@ -1,19 +1,19 @@
 import express from 'express';
 import {
-  analyzeDeepfake,
+  analyzeDeepfakeController,
   getDeepfakeForensics,
   getDeepfakeFrames,
   getDeepfakeTimeline,
   explainDeepfake,
   getDeepfakeRecommendations,
 } from '../controllers/deepfakeController.js';
-import { upload } from '../utils/fileUpload.js';
+import { uploadFile } from '../utils/fileUpload.js';
 import { optionalAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Upload and analyze endpoint
-router.post('/analyze', optionalAuth, upload, analyzeDeepfake);
+router.post('/analyze', optionalAuth, uploadFile, analyzeDeepfakeController);
 
 // Analysis endpoints
 router.get('/forensics/:id', optionalAuth, getDeepfakeForensics);

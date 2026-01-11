@@ -1,657 +1,544 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Shield, Activity, AlertTriangle, Globe, Search, Clock } from 'lucide-react'
-import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import Card from '../components/Card'
-import Button from '../components/Button'
-import SeverityBadge from '../components/SeverityBadge'
-import { threatAPI } from '../lib/api.js'
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Shield,
+  AlertTriangle,
+  Globe,
+  Activity,
+  RefreshCw,
+  Search,
+  Filter,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  Eye,
+  Settings,
+  Bell,
+  CheckCircle,
+  X,
+  MapPin,
+  Clock,
+  Zap,
+  BarChart3,
+  PieChart,
+  Database
+} from 'lucide-react';
 
-function ThreatOverview() {
-  const [threatOverview, setThreatOverview] = useState(null)
-  const [lookupResult, setLookupResult] = useState(null)
-  const [lookupQuery, setLookupQuery] = useState('')
-  const [loading, setLoading] = useState(true)
+const ThreatOverview = () => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedView, setSelectedView] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSeverity, setSelectedSeverity] = useState('all');
 
-  useEffect(() => {
-    loadThreatOverview()
-  }, [])
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsRefreshing(false);
+  };
 
-  const loadThreatOverview = async () => {
-    try {
-      const response = await threatAPI.getThreatOverview()
-      setThreatOverview(response.data)
-    } catch (error) {
-      console.error('Failed to load threat overview:', error)
-    } finally {
-      setLoading(false)
+  // Threat intelligence data
+  const [threatMetrics] = useState([
+    {
+      title: 'Active Threats',
+      value: '1,247',
+      change: '+12',
+      trend: 'up',
+      icon: AlertTriangle,
+      color: 'red'
+    },
+    {
+      title: 'Critical Alerts',
+      value: '23',
+      change: '-3',
+      trend: 'down',
+      icon: Target,
+      color: 'orange'
+    },
+    {
+      title: 'Intelligence Score',
+      value: '94%',
+      change: '+2.1%',
+      trend: 'up',
+      icon: Shield,
+      color: 'green'
+    },
+    {
+      title: 'Covered Regions',
+      value: '85',
+      change: 'Stable',
+      trend: 'stable',
+      icon: Globe,
+      color: 'blue'
     }
-  }
+  ]);
 
-  const handleLookupIOC = async () => {
-    if (!lookupQuery.trim()) return
-    try {
-      const response = await threatAPI.lookupIOC(lookupQuery)
-      setLookupResult(response.data)
-    } catch (error) {
-      console.error('IOC lookup error:', error)
-      setLookupResult({ found: false, message: 'Lookup failed' })
+  // Threat feed data
+  const [threatFeed] = useState([
+    {
+      id: 'TH-001',
+      type: 'APT-41 Campaign',
+      severity: 'critical',
+      source: 'Dark Web Intelligence',
+      target: 'Financial Sector',
+      status: 'active',
+      timestamp: '08:45:22 IST',
+      confidence: 96
+    },
+    {
+      id: 'TH-002',
+      type: 'Ransomware Activity',
+      severity: 'high',
+      source: 'Network Traffic',
+      target: 'Healthcare Systems',
+      status: 'mitigated',
+      timestamp: '08:42:15 IST',
+      confidence: 89
+    },
+    {
+      id: 'TH-003',
+      type: 'Phishing Campaign',
+      severity: 'medium',
+      source: 'Email Gateway',
+      target: 'Executive Team',
+      status: 'blocked',
+      timestamp: '08:38:45 IST',
+      confidence: 78
+    },
+    {
+      id: 'TH-004',
+      type: 'Zero-Day Exploit',
+      severity: 'critical',
+      source: 'Vulnerability Scan',
+      target: 'Web Servers',
+      status: 'investigating',
+      timestamp: '08:35:12 IST',
+      confidence: 94
     }
-  }
+  ]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0e27] p-8 flex items-center justify-center">
-        <div className="text-white text-xl">Loading threat overview...</div>
-      </div>
-    )
-  }
+  // Global threat regions
+  const [threatRegions] = useState([
+    { region: 'North America', threats: 342, severity: 'high', coverage: 98 },
+    { region: 'Europe', threats: 289, severity: 'medium', coverage: 96 },
+    { region: 'Asia Pacific', threats: 456, severity: 'critical', coverage: 94 },
+    { region: 'Middle East', threats: 123, severity: 'medium', coverage: 92 },
+    { region: 'Latin America', threats: 87, severity: 'low', coverage: 89 },
+    { region: 'Africa', threats: 56, severity: 'low', coverage: 87 }
+  ]);
+
+  // Intelligence sources
+  const [intelSources] = useState([
+    { name: 'Dark Web Monitoring', feeds: 12, quality: 96, status: 'active' },
+    { name: 'Threat Intelligence Feeds', feeds: 25, quality: 92, status: 'active' },
+    { name: 'Honeypot Networks', feeds: 8, quality: 88, status: 'active' },
+    { name: 'Partner Sharing', feeds: 15, quality: 94, status: 'active' }
+  ]);
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'running':
+        return 'text-green-400 bg-green-500/20';
+      case 'mitigated':
+      case 'blocked':
+        return 'text-blue-400 bg-blue-500/20';
+      case 'investigating':
+        return 'text-yellow-400 bg-yellow-500/20';
+      case 'critical':
+        return 'text-red-400 bg-red-500/20';
+      default:
+        return 'text-gray-400 bg-gray-500/20';
+    }
+  };
+
+  const getSeverityColor = (severity) => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return 'text-red-400 border-red-500/30 bg-red-500/10';
+      case 'high':
+        return 'text-orange-400 border-orange-500/30 bg-orange-500/10';
+      case 'medium':
+        return 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10';
+      case 'low':
+        return 'text-green-400 border-green-500/30 bg-green-500/10';
+      default:
+        return 'text-gray-400 border-gray-500/30 bg-gray-500/10';
+    }
+  };
+
+  const filteredThreats = threatFeed.filter(threat =>
+    threat.type.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (selectedSeverity === 'all' || threat.severity === selectedSeverity)
+  );
+
+  const Card = ({ children, className = "" }) => (
+    <div className={`bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 shadow-2xl ${className}`}>
+      {children}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#0a0e27] p-8">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center space-x-3 mb-8"
-        >
-          <Shield className="w-8 h-8 text-cyan-400" />
-          <h1 className="text-4xl font-bold neon-text">Threat Overview</h1>
-        </motion.div>
-        <p className="text-slate-400">Comprehensive threat monitoring and analysis</p>
-
-        {threatOverview && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-red-500/20 rounded-lg">
-                    <Activity className="w-6 h-6 text-red-400" />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">{threatOverview.totalAttacks24h.toLocaleString()}</div>
-                <p className="text-sm text-slate-400">Total Attacks (24h)</p>
-              </Card>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-red-500/20 rounded-lg">
-                    <AlertTriangle className="w-6 h-6 text-red-400" />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">{threatOverview.criticalThreats}</div>
-                <p className="text-sm text-slate-400">Critical Threats</p>
-              </Card>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-purple-500/20 rounded-lg">
-                    <Shield className="w-6 h-6 text-purple-400" />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">{threatOverview.highRiskIPs}</div>
-                <p className="text-sm text-slate-400">High-Risk IPs</p>
-              </Card>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-orange-500/20 rounded-lg">
-                    <Globe className="w-6 h-6 text-orange-400" />
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-white mb-1">{threatOverview.suspiciousDomains}</div>
-                <p className="text-sm text-slate-400">Suspicious Domains</p>
-              </Card>
-            </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-pink-900 to-slate-900 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between mb-8"
+      >
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-500 rounded-xl shadow-lg">
+            <Shield className="w-8 h-8 text-white" />
           </div>
-        )}
-
-        {/* Threat Heatmap */}
-        {threatOverview && threatOverview.geoHeatmap && (
-          <div className="grid grid-cols-1 gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-              <Card>
-                <h3 className="text-lg font-semibold text-white mb-4">Global Threat Heatmap</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
-                  {Object.entries(threatOverview.geoHeatmap).map(([region, intensity]) => {
-                    const intensityClass = intensity > 80 ? 'bg-red-500' : intensity > 60 ? 'bg-orange-500' : intensity > 40 ? 'bg-yellow-500' : intensity > 20 ? 'bg-green-500' : 'bg-blue-500'
-                    const opacity = Math.max(0.3, intensity / 100)
-                    return (
-                      <div key={region} className={`p-3 rounded-lg border ${intensityClass} border-opacity-30`} style={{ backgroundColor: `rgba(var(--${intensityClass.replace('bg-', '').replace('-500', '')}-rgb), ${opacity})` }}>
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-white">{intensity}%</div>
-                          <div className="text-xs text-slate-300">{region}</div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </Card>
-            </motion.div>
-          </div>
-        )}
-
-        {/* MITRE ATT&CK Matrix */}
-        {threatOverview && threatOverview.mitreFindings && (
-          <div className="grid grid-cols-1 gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-              <Card>
-                <h3 className="text-lg font-semibold text-white mb-4">MITRE ATT&CK Matrix</h3>
-                <div className="space-y-3">
-                  {threatOverview.mitreFindings.reduce((acc, technique) => {
-                    const existing = acc.find(t => t.tactic === technique.tactic)
-                    if (!existing) acc.push({ tactic: technique.tactic, techniques: [technique] })
-                    else existing.techniques.push(technique)
-                    return acc
-                  }, []).map((group) => (
-                    <div key={group.tactic} className="border border-slate-700/50 rounded-lg p-3">
-                      <h4 className="text-sm font-semibold text-cyan-400 mb-2">{group.tactic}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {group.techniques.map((tech) => (
-                          <div key={tech.technique} className="flex justify-between items-center bg-slate-800/50 rounded p-2">
-                            <span className="text-sm text-slate-300">{tech.technique}</span>
-                            <span className="text-xs text-red-400">{tech.detections}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Threat Classifier Widget */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            {lookupResult && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              Threat Intelligence Center
+            </h1>
+            <p className="text-slate-400 text-sm">Advanced threat detection and analysis platform</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          {/* Global Alert Indicator */}
+          <div className="relative">
+            <Bell className="w-5 h-5 text-red-400" />
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-xs font-bold">{threatMetrics.reduce((sum, m) => sum + (m.title === 'Critical Alerts' ? parseInt(m.value) : 0), 0)}</span>
+            </div>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:text-white hover:border-pink-500/50 transition-all duration-200 flex items-center space-x-2 ${
+              isRefreshing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+        </div>
+      </motion.div>
+
+      {/* View Tabs */}
+      <div className="flex space-x-1 mb-6 bg-slate-800/50 p-1 rounded-lg">
+        {[
+          { id: 'overview', label: 'Overview', icon: Target },
+          { id: 'threats', label: 'Active Threats', icon: AlertTriangle },
+          { id: 'regions', label: 'Global Regions', icon: Globe },
+          { id: 'intelligence', label: 'Intelligence', icon: Database },
+          { id: 'analysis', label: 'Analysis', icon: BarChart3 }
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedView(tab.id)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedView === tab.id
+                  ? 'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Overview Tab */}
+      {selectedView === 'overview' && (
+        <div className="space-y-8">
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {threatMetrics.map((metric, index) => (
+              <motion.div
+                key={metric.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
                 <Card>
-                  <h3 className="text-lg font-semibold text-white mb-4">IOC Lookup Results</h3>
-                  {lookupResult.found ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <SeverityBadge severity={lookupResult.data.threatLevel.toLowerCase()} />
-                        <span className="text-white font-medium">{lookupResult.type.toUpperCase()}</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-cyan-400 text-xs font-medium">REPUTATION SCORE</p>
-                          <p className="text-white text-lg font-bold">{lookupResult.data.reputationScore}/100</p>
-                        </div>
-                        <div>
-                          <p className="text-cyan-400 text-xs font-medium">ASN</p>
-                          <p className="text-white font-medium">{lookupResult.data.asn || 'N/A'}</p>
-                        </div>
-                      </div>
-
-                      <div>
-                        <p className="text-cyan-400 text-xs font-medium mb-1">BLACKLIST STATUS</p>
-                        <p className="text-white">{lookupResult.data.blacklistStatus}</p>
-                      </div>
-
-                      {lookupResult.data.category && (
-                        <div>
-                          <p className="text-cyan-400 text-xs font-medium mb-1">CATEGORY</p>
-                          <p className="text-slate-300 text-sm">{lookupResult.data.category}</p>
-                        </div>
-                      )}
-
-                      {lookupResult.data.malwareHistory && lookupResult.data.malwareHistory.length > 0 && (
-                        <div>
-                          <p className="text-cyan-400 text-xs font-medium mb-2">MALWARE HISTORY</p>
-                          <div className="flex flex-wrap gap-2">
-                            {lookupResult.data.malwareHistory.map((malware, index) => (
-                              <span key={index} className="px-2 py-1 bg-red-900/30 text-red-400 text-xs rounded">
-                                {malware}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {lookupResult.data.relatedThreats && lookupResult.data.relatedThreats.length > 0 && (
-                        <div>
-                          <p className="text-cyan-400 text-xs font-medium mb-2">RELATED THREATS</p>
-                          <div className="space-y-1">
-                            {lookupResult.data.relatedThreats.map((threat, index) => (
-                              <div key={index} className="text-slate-300 text-sm">• {threat}</div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="border-t border-slate-700/50 pt-3">
-                        <div className="text-xs text-slate-500 space-y-1">
-                          <p><span className="text-cyan-400">Last Seen:</span> {new Date(lookupResult.data.lastSeen).toLocaleString()}</p>
-                          <p><span className="text-cyan-400">First Seen:</span> {lookupResult.data.firstSeen ? new Date(lookupResult.data.firstSeen).toLocaleString() : 'N/A'}</p>
-                          {lookupResult.data.country && <p><span className="text-cyan-400">Country:</span> {lookupResult.data.country}</p>}
-                          {lookupResult.data.isp && <p><span className="text-cyan-400">ISP:</span> {lookupResult.data.isp}</p>}
-                        </div>
-                      </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2 bg-${metric.color}-500/20 rounded-lg`}>
+                      <metric.icon className={`w-5 h-5 text-${metric.color}-400`} />
                     </div>
-                  ) : (
-                    <div>
-                      <p className="text-white font-medium mb-2">No Results Found</p>
-                      <p className="text-slate-400 text-sm">{lookupResult.message}</p>
+                    <div className="flex items-center space-x-1">
+                      {metric.trend === 'up' ? (
+                        <TrendingUp className="w-3 h-3 text-green-400" />
+                      ) : metric.trend === 'down' ? (
+                        <TrendingDown className="w-3 h-3 text-red-400" />
+                      ) : null}
+                      <span className={`text-xs ${metric.trend === 'up' ? 'text-green-400' : metric.trend === 'down' ? 'text-red-400' : 'text-gray-400'}`}>
+                        {metric.change}
+                      </span>
                     </div>
-                  )}
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">{metric.value}</div>
+                  <div className="text-sm text-slate-400">{metric.title}</div>
                 </Card>
               </motion.div>
-            )}
+            ))}
           </div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">AI Threat Classifier</h3>
-              <ThreatClassifier />
-            </Card>
-          </motion.div>
+          {/* Recent Threat Activity */}
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-3">
+                <Activity className="w-6 h-6 text-red-400" />
+                <span>Recent Threat Activity</span>
+              </h2>
+              <span className="text-xs text-slate-400">Last 10 minutes</span>
+            </div>
+            <div className="space-y-4">
+              {threatFeed.slice(0, 5).map((threat, index) => (
+                <div key={threat.id} className={`flex items-center space-x-3 p-4 rounded-lg border-l-4 ${getSeverityColor(threat.severity)}`}>
+                  <div className={`w-3 h-3 rounded-full ${threat.severity === 'critical' ? 'bg-red-400' : threat.severity === 'high' ? 'bg-orange-400' : threat.severity === 'medium' ? 'bg-yellow-400' : 'bg-green-400'}`}></div>
+                  <div className="flex-1">
+                    <div className="text-sm text-white font-medium">{threat.type}</div>
+                    <div className="text-xs text-slate-400">{threat.source} → {threat.target}</div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${getStatusColor(threat.status)}`}>
+                      {threat.status}
+                    </span>
+                    <span className="text-xs text-slate-500">{threat.timestamp}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
+      )}
 
-        {/* Dark Web Intel */}
-        <div className="grid grid-cols-1 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">Dark Web Intel Feed</h3>
-              <DarkWebIntel />
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Correlation Engine */}
-        <div className="grid grid-cols-1 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">Threat Correlation Insights</h3>
-              <CorrelationInsights />
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Severity Distribution Pie Chart */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">Severity Distribution</h3>
-              <SeverityDistributionChart />
-            </Card>
-          </motion.div>
-
-          {/* Attack Trend Line Graph */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">Attack Trends (12 Months)</h3>
-              <AttackTrendChart />
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Threat Feed */}
-        <div className="grid grid-cols-1 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.3 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">Live Threat Feed</h3>
-              <ThreatFeed />
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Enhanced Threat Correlation Engine */}
-        <div className="grid grid-cols-1 gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.4 }}>
-            <Card>
-              <h3 className="text-lg font-semibold text-white mb-4">Threat Correlation Engine</h3>
-              <CorrelationEngine />
-            </Card>
-          </motion.div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Threat Classifier Component
-function ThreatClassifier() {
-  const [classifyText, setClassifyText] = useState('')
-  const [classification, setClassification] = useState(null)
-
-  const handleClassify = async () => {
-    if (!classifyText.trim()) return
-    try {
-      const response = await threatAPI.classifyThreat({ text: classifyText })
-      setClassification(response.data)
-    } catch (error) {
-      setClassification({ classification: 'Error', confidence: 0, recommendedAction: 'Unable to classify' })
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <textarea
-          value={classifyText}
-          onChange={(e) => setClassifyText(e.target.value)}
-          placeholder="Describe the suspicious activity or log entry..."
-          className="w-full h-32 px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-        />
-      </div>
-      <Button onClick={handleClassify} className="w-full">Classify Threat</Button>
-
-      {classification && (
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-4 bg-slate-800/50 rounded-lg border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-white font-medium">{classification.classification}</span>
-            <span className="text-cyan-400">{classification.confidence}% confidence</span>
+      {/* Active Threats Tab */}
+      {selectedView === 'threats' && (
+        <div className="space-y-6">
+          {/* Search and Filter Controls */}
+          <div className="flex flex-wrap gap-4">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search threats..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400/25"
+              />
+            </div>
+            <select
+              value={selectedSeverity}
+              onChange={(e) => setSelectedSeverity(e.target.value)}
+              className="px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400/25"
+            >
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
           </div>
-          <p className="text-slate-400 text-sm">{classification.recommendedAction}</p>
-        </motion.div>
+
+          {/* Threat Table */}
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Threat Type</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Severity</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Source</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Confidence</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredThreats.map((threat, index) => (
+                    <tr key={threat.id} className="border-b border-slate-800/30 hover:bg-slate-800/20">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-3">
+                          <AlertTriangle className="w-5 h-5 text-slate-400" />
+                          <div>
+                            <div className="text-white font-medium">{threat.type}</div>
+                            <div className="text-slate-400 text-xs">{threat.target}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${getSeverityColor(threat.severity)}`}>
+                          {threat.severity}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-300">{threat.source}</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex px-2 py-1 rounded text-xs font-semibold ${getStatusColor(threat.status)}`}>
+                          {threat.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-cyan-400 font-semibold">{threat.confidence}%</span>
+                          <div className="w-12 bg-slate-700 rounded-full h-1">
+                            <div className="h-1 bg-cyan-500 rounded-full" style={{ width: `${threat.confidence}%` }}></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">{threat.timestamp}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Global Regions Tab */}
+      {selectedView === 'regions' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {threatRegions.map((region, index) => (
+              <motion.div
+                key={region.region}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <MapPin className={`w-8 h-8 ${region.severity === 'critical' ? 'text-red-400' : region.severity === 'high' ? 'text-orange-400' : region.severity === 'medium' ? 'text-yellow-400' : 'text-green-400'}`} />
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{region.region}</h3>
+                        <p className="text-xs text-slate-400">{region.threats} active threats</p>
+                      </div>
+                    </div>
+                    <span className={`text-lg font-bold ${region.coverage >= 95 ? 'text-green-400' : region.coverage >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
+                      {region.coverage}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Coverage:</span>
+                      <span className="text-white">{region.coverage}%</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Severity:</span>
+                      <span className={`font-medium ${region.severity === 'critical' ? 'text-red-400' : region.severity === 'high' ? 'text-orange-400' : region.severity === 'medium' ? 'text-yellow-400' : 'text-green-400'}`}>
+                        {region.severity}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Coverage Bar */}
+                  <div className="w-full bg-slate-700 rounded-full h-2 mt-4">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-1000 ${
+                        region.coverage >= 95 ? 'bg-green-500' :
+                        region.coverage >= 90 ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}
+                      style={{ width: `${region.coverage}%` }}
+                    ></div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Intelligence Tab */}
+      {selectedView === 'intelligence' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {intelSources.map((source, index) => (
+              <motion.div
+                key={source.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <Database className={`w-8 h-8 ${source.status === 'active' ? 'text-green-400' : 'text-slate-400'}`} />
+                    <span className={`text-lg font-bold ${source.quality >= 95 ? 'text-green-400' : source.quality >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
+                      {source.quality}%
+                    </span>
+                  </div>
+                  <div className="text-lg font-semibold text-white mb-2">{source.name}</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Active Feeds:</span>
+                      <span className="text-white">{source.feeds}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Status:</span>
+                      <span className={`font-medium ${source.status === 'active' ? 'text-green-400' : 'text-red-400'}`}>
+                        {source.status}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Analysis Tab */}
+      {selectedView === 'analysis' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <div className="flex items-center space-x-3 mb-6">
+                <BarChart3 className="w-6 h-6 text-blue-400" />
+                <h2 className="text-xl font-bold text-white">Threat Analysis</h2>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                  <span className="text-slate-300">Detection Rate</span>
+                  <span className="text-2xl font-bold text-green-400">98.5%</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                  <span className="text-slate-300">False Positives</span>
+                  <span className="text-2xl font-bold text-yellow-400">2.1%</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                  <span className="text-slate-300">Response Time</span>
+                  <span className="text-2xl font-bold text-blue-400">1.2s</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-800/30 rounded-lg">
+                  <span className="text-slate-300">AI Confidence</span>
+                  <span className="text-2xl font-bold text-purple-400">94.7%</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <div className="flex items-center space-x-3 mb-6">
+                <Zap className="w-6 h-6 text-yellow-400" />
+                <h2 className="text-xl font-bold text-white">AI Insights</h2>
+              </div>
+              <div className="space-y-4">
+                <div className="p-3 bg-slate-800/30 rounded-lg">
+                  <div className="text-sm text-cyan-400 font-semibold mb-2">Pattern Recognition</div>
+                  <p className="text-slate-300 text-sm">Detected 15 similar attack patterns across 8 different threat actors</p>
+                </div>
+                <div className="p-3 bg-slate-800/30 rounded-lg">
+                  <div className="text-sm text-cyan-400 font-semibold mb-2">Predictive Analysis</div>
+                  <p className="text-slate-300 text-sm">82% likelihood of phishing campaign targeting financial sector</p>
+                </div>
+                <div className="p-3 bg-slate-800/30 rounded-lg">
+                  <div className="text-sm text-cyan-400 font-semibold mb-2">Correlation Engine</div>
+                  <p className="text-slate-300 text-sm">Linked 23 disparate events to single APT campaign</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-// Dark Web Intel Component
-function DarkWebIntel() {
-  const [darkWebData, setDarkWebData] = useState(null)
-
-  useEffect(() => {
-    const loadDarkWeb = async () => {
-      try {
-        const response = await threatAPI.getDarkWebIntel()
-        setDarkWebData(response.data)
-      } catch (error) {
-        console.error('Failed to load dark web data:', error)
-      }
-    }
-    loadDarkWeb()
-  }, [])
-
-  if (!darkWebData) return <div className="text-slate-400">Loading dark web intelligence...</div>
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="text-center">
-        <div className="text-2xl font-bold text-red-400">{darkWebData.stolenCredentialsCount.toLocaleString()}</div>
-        <div className="text-sm text-slate-400">Stolen Credentials</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-yellow-400">{darkWebData.leakedAssets}</div>
-        <div className="text-sm text-slate-400">Leaked Assets</div>
-      </div>
-      <div className="text-center">
-        <div className="text-2xl font-bold text-purple-400">{darkWebData.marketplaceMentions}</div>
-        <div className="text-sm text-slate-400">Marketplace Mentions</div>
-      </div>
-      <div className="col-span-3 mt-4">
-        <h4 className="text-sm font-semibold text-white mb-2">Ransomware Group Activity</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {darkWebData.ransomwareGroupActivity.map((group, index) => (
-            <div key={index} className={`p-3 rounded-lg border ${group.status === 'Active' ? 'border-red-500/30 bg-red-900/20' : 'border-slate-700/50 bg-slate-800/50'}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-white font-medium">{group.group}</span>
-                <SeverityBadge severity={group.status === 'Active' ? 'high' : group.status === 'Dissolved' ? 'low' : 'medium'} />
-              </div>
-              <p className="text-slate-400 text-sm">{group.targets}</p>
-              <p className="text-slate-400 text-xs mt-1">{group.recentActivity}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Correlation Insights Component
-function CorrelationInsights() {
-  const [correlations, setCorrelations] = useState([])
-
-  useEffect(() => {
-    const loadCorrelation = async () => {
-      try {
-        const response = await threatAPI.getThreatCorrelation()
-        setCorrelations(response.data.correlatedEvents)
-      } catch (error) {
-        console.error('Failed to load correlation data:', error)
-      }
-    }
-    loadCorrelation()
-  }, [])
-
-  if (!correlations.length) return <div className="text-slate-400">Loading correlation insights...</div>
-
-  return (
-    <div className="space-y-4">
-      {correlations.map((correlation, index) => (
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="flex justify-between items-start p-3 bg-slate-800/50 rounded-lg border border-slate-700/50"
-        >
-          <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="text-slate-300 font-medium">{correlation.threat}</span>
-              <SeverityBadge severity={correlation.confidence > 80 ? 'high' : correlation.confidence > 60 ? 'medium' : 'low'} />
-            </div>
-            <p className="text-slate-400 text-sm">{correlation.description}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-cyan-400 text-sm font-bold">{correlation.confidence}%</div>
-            <div className="text-xs text-slate-500">{correlation.timestamp}</div>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-// Severity Distribution Pie Chart Component
-function SeverityDistributionChart() {
-  const [severityData, setSeverityData] = useState([])
-
-  useEffect(() => {
-    const loadSeverityData = async () => {
-      try {
-        const response = await threatAPI.getSeverityStats()
-        setSeverityData(response.data)
-      } catch (error) {
-        console.error('Failed to load severity data:', error)
-      }
-    }
-    loadSeverityData()
-  }, [])
-
-  if (!severityData.length) return <div className="text-slate-400">Loading severity distribution...</div>
-
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={severityData}
-          cx="50%"
-          cy="50%"
-          outerRadius={80}
-          fill="#8884d8"
-          dataKey="value"
-          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-        >
-          {severityData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip />
-      </PieChart>
-    </ResponsiveContainer>
-  )
-}
-
-// Attack Trend Line Graph Component
-function AttackTrendChart() {
-  const [trendData, setTrendData] = useState([])
-
-  useEffect(() => {
-    const loadTrendData = async () => {
-      try {
-        const response = await threatAPI.getTrends()
-        setTrendData(response.data)
-      } catch (error) {
-        console.error('Failed to load trend data:', error)
-      }
-    }
-    loadTrendData()
-  }, [])
-
-  if (!trendData.length) return <div className="text-slate-400">Loading attack trends...</div>
-
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={trendData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-        <XAxis dataKey="month" stroke="#9ca3af" />
-        <YAxis stroke="#9ca3af" />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: '#1e293b',
-            border: '1px solid #475569',
-            borderRadius: '6px'
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="attacks"
-          stroke="#ef4444"
-          fill="rgba(239, 68, 68, 0.2)"
-          strokeWidth={2}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  )
-}
-
-// Threat Feed Component
-function ThreatFeed() {
-  const [threatFeed, setThreatFeed] = useState([])
-
-  useEffect(() => {
-    const loadThreatFeed = async () => {
-      try {
-        const response = await threatAPI.getThreatFeed()
-        setThreatFeed(response.data.threats || [])
-      } catch (error) {
-        console.error('Failed to load threat feed:', error)
-      }
-    }
-    loadThreatFeed()
-  }, [])
-
-  if (!threatFeed.length) return <div className="text-slate-400">Loading threat feed...</div>
-
-  return (
-    <div className="space-y-4 max-h-96 overflow-y-auto">
-      {threatFeed.map((threat, index) => (
-        <motion.div
-          key={threat.id}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700/50"
-        >
-          <div className="flex items-center space-x-4">
-            <SeverityBadge severity={threat.level.toLowerCase()} />
-            <div>
-              <div className="text-white font-medium">{threat.vector}</div>
-              <div className="text-slate-400 text-sm">{threat.source} → {threat.target}</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-xs text-slate-500">
-              {new Date(threat.timestamp).toLocaleString()}
-            </div>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-// Correlation Engine Component
-function CorrelationEngine() {
-  const [correlationData, setCorrelationData] = useState(null)
-
-  useEffect(() => {
-    const loadCorrelationData = async () => {
-      try {
-        const response = await threatAPI.getCorrelationEngine()
-        setCorrelationData(response.data)
-      } catch (error) {
-        console.error('Failed to load correlation engine data:', error)
-      }
-    }
-    loadCorrelationData()
-  }, [])
-
-  if (!correlationData) return <div className="text-slate-400">Loading correlation engine...</div>
-
-  return (
-    <div className="space-y-6">
-      {/* Connected IOCs */}
-      <div>
-        <h4 className="text-sm font-semibold text-cyan-400 mb-3">Connected IOCs</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {correlationData.connectedIOCs?.map((ioc, index) => (
-            <div key={index} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <div className="text-white font-medium">{ioc.ioc}</div>
-              <div className="text-slate-400 text-sm">{ioc.type} • {ioc.linkedThreats} linked threats</div>
-              <div className="text-cyan-400 text-xs">Similarity: {ioc.similarity}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Attack Clusters */}
-      <div>
-        <h4 className="text-sm font-semibold text-cyan-400 mb-3">Attack Clusters</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {correlationData.attackClusters?.map((cluster, index) => (
-            <div key={index} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700/50">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-white font-medium">{cluster.clusterId}</div>
-                <div className="text-cyan-400 text-sm">{cluster.confidence}% confidence</div>
-              </div>
-              <div className="text-slate-400 text-sm">{cluster.pattern}</div>
-              <div className="text-xs text-slate-500">{cluster.threatCount} threats detected</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pattern Similarity */}
-      <div>
-        <h4 className="text-sm font-semibold text-cyan-400 mb-3">Pattern Similarity Analysis</h4>
-        <div className="space-y-2">
-          {correlationData.patternSimilarity?.map((pattern, index) => (
-            <div key={index} className="flex justify-between items-center p-2 bg-slate-800/50 rounded">
-              <span className="text-slate-300">{pattern.pattern}</span>
-              <div className="text-right">
-                <div className="text-white text-sm">{pattern.matchCount} matches</div>
-                <div className="text-cyan-400 text-xs">{pattern.similarityScore}% similarity</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default ThreatOverview
+export default ThreatOverview;

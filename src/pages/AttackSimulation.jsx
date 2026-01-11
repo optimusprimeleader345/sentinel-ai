@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
 import {
   Play,
   Shield,
@@ -12,7 +12,24 @@ import {
   Users,
   HardDrive,
   FileText,
-  BookOpen
+  BookOpen,
+  Zap,
+  Activity,
+  Cpu,
+  Network,
+  Eye,
+  RefreshCw,
+  Pause,
+  Square,
+  Settings,
+  Gauge,
+  Brain,
+  BarChart3,
+  Layers,
+  Hexagon,
+  Database,
+  Wifi,
+  Monitor
 } from 'lucide-react'
 import Button from '../components/Button'
 
@@ -65,6 +82,21 @@ function AttackSimulation() {
   })
   const [simulationResult, setSimulationResult] = useState(null)
   const [killChainStages, setKillChainStages] = useState(baseKillChainStages)
+
+  // Advanced Real-time Features
+  const [isRunning, setIsRunning] = useState(false)
+  const [currentStage, setCurrentStage] = useState(-1)
+  const [simulationProgress, setSimulationProgress] = useState(0)
+  const [realTimeEvents, setRealTimeEvents] = useState([])
+  const [defenseResponses, setDefenseResponses] = useState([])
+  const [systemMetrics, setSystemMetrics] = useState({
+    cpu: 0, memory: 0, network: 0, disk: 0, alerts: 0
+  })
+  const [vulnerabilitiesExploited, setVulnerabilitiesExploited] = useState([])
+  const [aiPredictions, setAiPredictions] = useState([])
+  const [attackAdaptation, setAttackAdaptation] = useState({})
+
+  const intervalRef = useRef(null)
 
   // Get stages based on selected scenario
   const getScenarioStages = (scenario) => {
@@ -385,6 +417,318 @@ function AttackSimulation() {
 
         </div>
 
+        {/* Advanced Real-time Features Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+
+          {/* Live Simulation Control Panel */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="bg-[#0f172a]/80 border border-slate-700/50 rounded-xl p-6 text-slate-200 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+          >
+            <h2 className="text-xl font-semibold mb-6 text-white flex items-center space-x-3">
+              <Activity className="w-6 h-6 text-green-400" />
+              <span>Live Simulation Control</span>
+            </h2>
+
+            {/* Simulation Controls */}
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center justify-center space-x-4">
+                {!isRunning ? (
+                  <button
+                    onClick={() => {
+                      setIsRunning(true)
+                      setCurrentStage(0)
+                      setSimulationProgress(0)
+                      // Start live simulation
+                    }}
+                    className="flex items-center space-x-2 bg-green-500/20 text-green-400 hover:bg-green-500/30 px-6 py-3 rounded-lg font-semibold transition-colors"
+                  >
+                    <Play className="w-5 h-5" />
+                    <span>Start Live Simulation</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => setIsRunning(false)}
+                      className="flex items-center space-x-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 px-4 py-2 rounded-lg font-semibold transition-colors"
+                    >
+                      <Square className="w-4 h-4" />
+                      <span>Stop</span>
+                    </button>
+                    <button className="flex items-center space-x-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-lg font-semibold transition-colors">
+                      <Pause className="w-4 h-4" />
+                      <span>Pause</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Bar */}
+              {simulationProgress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Simulation Progress</span>
+                    <span className="text-cyan-400">{simulationProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-3">
+                    <div
+                      className="bg-gradient-to-r from-purple-500 to-cyan-500 h-3 rounded-full transition-all duration-1000"
+                      style={{ width: `${simulationProgress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Real-time Metrics */}
+            <div className="space-y-4">
+              <h4 className="text-md font-semibold text-white">Real-time Metrics</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-red-400">{Math.floor(simulationProgress * 2.3)}</div>
+                  <div className="text-xs text-slate-400">Commands Executed</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-yellow-400">{Math.floor(simulationProgress * 1.8)}</div>
+                  <div className="text-xs text-slate-400">Systems Tested</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-green-400">{Math.floor(simulationProgress * 0.7)}</div>
+                  <div className="text-xs text-slate-400">Defenses Triggered</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3 text-center">
+                  <div className="text-lg font-bold text-cyan-400">{Math.floor(Math.random() * 1500 + 500)}</div>
+                  <div className="text-xs text-slate-400">Events/sec</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Live Event Stream */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-[#0f172a]/80 border border-slate-700/50 rounded-xl p-6 text-slate-200 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+          >
+            <h2 className="text-xl font-semibold mb-6 text-white flex items-center space-x-3">
+              <Zap className="w-6 h-6 text-yellow-400" />
+              <span>Live Event Stream</span>
+            </h2>
+
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {[
+                { time: "08:47:23", event: "SSH Brute Force Attempt", severity: "high", status: "blocked" },
+                { time: "08:46:37", event: "SQL Injection Detected", severity: "critical", status: "quarantined" },
+                { time: "08:45:51", event: "Malware Signature Match", severity: "high", status: "contained" },
+                { time: "08:45:12", event: "Privilege Escalation", severity: "critical", status: "monitoring" },
+                { time: "08:44:28", event: "Data Exfiltration Attempted", severity: "medium", status: "alerted" },
+                { time: "08:43:59", event: "Network Scan Detected", severity: "low", status: "logged" },
+                { time: "08:43:31", event: "Ransomware Indicators Found", severity: "critical", status: "isolated" }
+              ].map((event, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`p-3 rounded-lg border-l-4 ${
+                    event.severity === 'critical' ? 'border-l-red-500 bg-red-500/5'
+                    : event.severity === 'high' ? 'border-l-orange-500 bg-orange-500/5'
+                    : 'border-l-blue-500 bg-blue-500/5'
+                  } text-sm`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-white font-medium">{event.event}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        event.severity === 'critical' ? 'bg-red-500/20 text-red-400'
+                        : event.severity === 'high' ? 'bg-orange-500/20 text-orange-400'
+                        : 'bg-blue-500/20 text-blue-400'
+                      }`}>
+                        {event.severity}
+                      </span>
+                      <span className="text-cyan-400 text-xs">{event.time}</span>
+                    </div>
+                  </div>
+                  <div className={`text-xs font-semibold ${
+                    event.status === 'blocked' ? 'text-green-400'
+                    : event.status === 'contained' ? 'text-blue-400'
+                    : event.status === 'alerted' ? 'text-yellow-400'
+                    : event.status === 'isolated' ? 'text-red-400'
+                    : 'text-slate-400'
+                  }`}>
+                    Status: {event.status.toUpperCase()}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* System Performance Monitoring */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="bg-[#0f172a]/80 border border-slate-700/50 rounded-xl p-6 text-slate-200 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+          >
+            <h2 className="text-xl font-semibold mb-6 text-white flex items-center space-x-3">
+              <Gauge className="w-6 h-6 text-purple-400" />
+              <span>System Performance</span>
+            </h2>
+
+            <div className="space-y-4">
+              {[
+                { label: "CPU Usage", value: isRunning ? Math.floor(Math.random() * 40 + 30) : 0, icon: Cpu, color: "red" },
+                { label: "Memory Load", value: isRunning ? Math.floor(Math.random() * 50 + 20) : 0, icon: Database, color: "blue" },
+                { label: "Network I/O", value: isRunning ? Math.floor(Math.random() * 60 + 15) : 0, icon: Wifi, color: "green" },
+                { label: "Security Events", value: isRunning ? Math.floor(Math.random() * 100 + 50) : 0, icon: Shield, color: "orange" }
+              ].map((metric, index) => (
+                <div key={metric.label} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <metric.icon className={`w-4 h-4 text-${metric.color}-400`} />
+                      <span className="text-sm text-slate-300">{metric.label}</span>
+                    </div>
+                    <span className={`text-sm font-bold text-${metric.color}-400`}>
+                      {metric.value}{metric.label === "Security Events" ? "/sec" : "%"}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div
+                      className={`bg-gradient-to-r from-${metric.color}-500 to-${metric.color}-400 h-2 rounded-full transition-all duration-1000`}
+                      style={{
+                        width: `${isRunning ? metric.value : 0}%`,
+                        animationDelay: `${index * 200}ms`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* AI Response Status */}
+            <div className="border-t border-slate-700/50 pt-4 mt-6">
+              <h4 className="text-sm font-semibold text-cyan-400 mb-3">AI Response Engine</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Active Responses:</span>
+                  <span className="text-green-400">{isRunning ? 7 : 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Response Time:</span>
+                  <span className="text-green-400">{isRunning ? '45ms' : '--'}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-400">Adaptation Level:</span>
+                  <span className="text-purple-400">{isRunning ? '87%' : '0%'}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* AI Adaptive Defense Learning */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="bg-[#0f172a]/80 border border-slate-700/50 rounded-xl p-6 text-slate-200 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+        >
+          <h2 className="text-xl font-semibold mb-6 text-white flex items-center space-x-3">
+            <Brain className="w-6 h-6 text-cyan-400" />
+            <span>AI Adaptive Defense Learning</span>
+          </h2>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
+              <h4 className="text-md font-semibold text-white">Learning Metrics</h4>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-sm">Model Accuracy:</span>
+                  <span className="text-green-400 font-semibold">94.7%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-sm">False Positives:</span>
+                  <span className="text-yellow-400 font-semibold">2.1%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-sm">Training Data:</span>
+                  <span className="text-cyan-400 font-semibold">1.2M samples</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400 text-sm">Learning Rate:</span>
+                  <span className="text-purple-400 font-semibold">Adaptive</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-md font-semibold text-white">Attack Pattern Recognition</h4>
+              <div className="space-y-2">
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-slate-300">Known Patterns</span>
+                    <span className="text-green-400 font-bold">87%</span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '87%' }}></div>
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-slate-300">Zero-day Detection</span>
+                    <span className="text-cyan-400 font-bold">91%</span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="bg-cyan-500 h-2 rounded-full" style={{ width: '91%' }}></div>
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm text-slate-300">Behavioral Analysis</span>
+                    <span className="text-purple-400 font-bold">95%</span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '95%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-md font-semibold text-white">Prediction Engine</h4>
+              <div className="space-y-3">
+                <div className="bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-white">Next Predicted Attack</span>
+                    <span className="text-red-400 text-xs font-bold">HIGH RISK</span>
+                  </div>
+                  <div className="text-xs text-slate-300">Phishing → Lateral Movement → Data Exfiltration</div>
+                  <div className="text-xs text-red-400 mt-1">Predicted: 3-5 hours</div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-white">Recommended Actions</span>
+                    <span className="text-blue-400 text-xs">AI Suggested</span>
+                  </div>
+                  <div className="space-y-1 text-xs text-slate-300">
+                    <div>• Deploy endpoint detection rules</div>
+                    <div>• Enable MFA for 47 high-risk accounts</div>
+                    <div>• Isolate critical data segments</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Simulation History */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -392,7 +736,7 @@ function AttackSimulation() {
           transition={{ delay: 0.7 }}
           className="bg-[#0f172a]/80 border border-slate-700/50 rounded-xl p-6 text-slate-200 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
         >
-          <h2 className="text-xl font-semibold mb-4 text-white">7️⃣ Simulation History</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">7️⃣ Simulation History & Learning</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -400,30 +744,55 @@ function AttackSimulation() {
                   <th className="text-left py-2 px-3 text-slate-400 font-medium">ID</th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium">Scenario</th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium">Result</th>
+                  <th className="text-left py-2 px-3 text-slate-400 font-medium">AI Learning</th>
                   <th className="text-left py-2 px-3 text-slate-400 font-medium">Date</th>
                 </tr>
               </thead>
               <tbody>
-                {simulationHistory.map((sim) => (
+                {[
+                  { id: "SIM-001", scenario: "Phishing Campaign", result: "Contained", learning: "+12% detection", date: "2025-01-03" },
+                  { id: "SIM-002", scenario: "Ransomware Outbreak", result: "Partial Compromise", learning: "+18% patterns", date: "2025-01-04" },
+                  { id: "SIM-003", scenario: "Brute Force Attack", result: "Blocked", learning: "+7% correlation", date: "2025-01-05" },
+                  { id: "SIM-004", scenario: "Data Exfiltration", result: "Contained", learning: "+15% prevention", date: "2025-01-06" }
+                ].map((sim) => (
                   <tr key={sim.id} className="border-b border-slate-700/20 hover:bg-slate-800/20">
                     <td className="py-3 px-3 text-slate-300">{sim.id}</td>
                     <td className="py-3 px-3 text-slate-300">{sim.scenario}</td>
                     <td className="py-3 px-3">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          sim.result === 'Contained'
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-yellow-500/20 text-yellow-400'
+                          sim.result === 'Contained' ? 'bg-green-500/20 text-green-400'
+                          : sim.result === 'Blocked' ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
                         }`}
                       >
                         {sim.result}
                       </span>
                     </td>
+                    <td className="py-3 px-3 text-cyan-400 text-sm">{sim.learning}</td>
                     <td className="py-3 px-3 text-slate-400">{sim.date}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Learning Summary */}
+          <div className="border-t border-slate-700/50 pt-4 mt-4">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                <div className="text-lg font-bold text-green-400">+52%</div>
+                <div className="text-xs text-slate-400">Overall Learning</div>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                <div className="text-lg font-bold text-blue-400">12.3K</div>
+                <div className="text-xs text-slate-400">Attack Patterns</div>
+              </div>
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+                <div className="text-lg font-bold text-purple-400">96.8%</div>
+                <div className="text-xs text-slate-400">Prediction Accuracy</div>
+              </div>
+            </div>
           </div>
         </motion.div>
 

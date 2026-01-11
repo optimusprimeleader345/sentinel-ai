@@ -2,6 +2,9 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
+// Export API_BASE_URL for WebSocket use
+export { API_BASE_URL }
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -85,6 +88,13 @@ export const scanAPI = {
   scanEmail: (data) => api.post('/scan/email', data),
   getHistory: () => api.get('/scan/history'),
 }
+
+// IP Scanner API
+export const scanIP = (data) => api.post('/ip/scan', data)
+export const getIPReports = () => api.get('/ip/reports')
+
+// Password Breach Check API
+export const checkPasswordBreach = (data) => api.post('/password/check', data)
 
 export const scanFile = (filename) => api.post('/scan/file', { filename })
 export const checkReputation = (query) => api.get(`/scan/reputation?query=${query}`)
@@ -200,7 +210,6 @@ export const getDefenseStatus = () => api.get('/defense/status');
 export const getDefenseActions = () => api.get('/defense/actions');
 export const getActiveThreats = () => api.get('/defense/active-threats');
 export const getDefenseRecommendations = () => api.get('/defense/recommendations');
-export const sendDefenseCommand = (data) => api.post('/defense/command', data);
 
 // Log Analysis API
 export const analyzeLogs = (data) => api.post('/logs/analyze', data);
@@ -210,10 +219,18 @@ export const getLogEvents = () => api.get('/logs/events');
 export const getLogTimeline = () => api.get('/logs/timeline');
 
 // Prediction API
+export const getPredictiveAnalysis = () => api.get('/prediction/analyze');
+export const getAssetPrediction = (assetId) => api.get(`/prediction/asset/${assetId}`);
+export const getPredictionMetrics = () => api.get('/prediction/metrics');
+export const trainPredictionModel = (data) => api.post('/prediction/train', data);
+export const getPredictionAlerts = () => api.get('/prediction/alerts');
+export const getPredictionInsights = (assetId) => api.get(`/prediction/insights/${assetId}`);
+
+// Legacy prediction functions for backward compatibility
 export const getPredictionSummary = () => api.get('/prediction/summary');
 export const getPredictionAttackTypes = () => api.get('/prediction/attack-types');
 export const getPredictionRisks = () => api.get('/prediction/risks');
-export const getPredictionInsights = () => api.get('/prediction/insights');
+export const getPredictionInsightsOld = () => api.get('/prediction/insights');
 export const getPredictionHeatmap = () => api.get('/prediction/heatmap');
 export const getPredictionExplanation = () => api.get('/prediction/explain');
 
@@ -226,10 +243,55 @@ export const getDeviceBehavior = () => api.get('/behavior/devices');
 export const getLocationActivity = () => api.get('/behavior/locations');
 export const getBehaviorInsights = () => api.get('/behavior/insights');
 
-// Security Score
+// Advanced Behavioral Analytics API
+export const behavioralAnalyticsAPI = {
+  analyzeActivity: (data) => api.post('/behavior-analytics/analyze-activity', data),
+  getProfile: (username) => api.get(`/behavior-analytics/profile/${username}`),
+  getSummary: () => api.get('/behavior-analytics/summary'),
+  getAnomalies: () => api.get('/behavior-analytics/anomalies'),
+  updateBaseline: (data) => api.put('/behavior-analytics/baseline', data),
+  getRiskScores: () => api.get('/behavior-analytics/risk-scores'),
+  getTrends: (params) => api.get('/behavior-analytics/trends', { params }),
+  getSessions: () => api.get('/behavior-analytics/sessions')
+};
+
+// AI Autonomous Security Operations (SOAR) API
+export const autonomousSecurityAPI = {
+  processEvent: (data) => api.post('/autonomous-security/process', data),
+  getStatus: () => api.get('/autonomous-security/status'),
+  updateAutonomyLevel: (data) => api.put('/autonomous-security/autonomy-level', data),
+  getDecisions: (params) => api.get('/autonomous-security/decisions', { params }),
+  overrideDecision: (data) => api.post('/autonomous-security/override', data),
+  getMetrics: () => api.get('/autonomous-security/metrics'),
+  getLearning: () => api.get('/autonomous-security/learning'),
+  simulate: (data) => api.post('/autonomous-security/simulate', data),
+  health: () => api.get('/autonomous-security/health')
+};
+
+// Quantum-Resistant Cryptography Suite API
+export const quantumCryptographyAPI = {
+  getStatus: () => api.get('/quantum-cryptography/status'),
+  performThreatAssessment: () => api.get('/quantum-cryptography/threat-assessment'),
+  generateKeys: (data) => api.post('/quantum-cryptography/generate-keys', data),
+  encrypt: (data) => api.post('/quantum-cryptography/encrypt', data),
+  decrypt: (data) => api.post('/quantum-cryptography/decrypt', data),
+  getKeyManagement: (params) => api.get('/quantum-cryptography/key-management', { params }),
+  getMigrationAssessment: () => api.get('/quantum-cryptography/migration-assessment'),
+  testAlgorithm: (data) => api.post('/quantum-cryptography/test-algorithm', data),
+  getQuantumNews: () => api.get('/quantum-cryptography/quantum-news'),
+  getCompliance: () => api.get('/quantum-cryptography/compliance'),
+  getRoadmap: () => api.get('/quantum-cryptography/roadmap')
+};
+
+// Security Score Enhanced
 export const getOverallSecurityScore = () => api.get('/security-score/overall');
-export const getSecurityScoreFactors = () => api.get('/security-score/factors');
-export const getSecurityScoreHistory = () => api.get('/security-score/history');
+export const getSecurityScoreBreakdown = () => api.get('/security-score/breakdown');
+export const getSecurityScoreRiskFactors = () => api.get('/security-score/risk-factors');
+export const getSecurityScoreRecommendations = () => api.get('/security-score/recommendations');
+export const getSecurityScoreAnalysis = () => api.get('/security-score/analysis');
+// Backward compatibility
+export const getSecurityScoreFactors = () => api.get('/security-score/breakdown');
+export const getSecurityScoreHistory = (days) => api.get(`/security-score/history?days=${days || 30}`);
 
 // Dark Web Monitor
 export const getDarkwebBreaches = () => api.get('/darkweb/breaches-exact');
@@ -282,9 +344,19 @@ export const newScanFile = (data) =>
   });
 
 // Threat Intel
+export const getThreatIntel = () => api.get("/threat-intel");
 export const getThreatFeed = () => api.get("/threat-intel/feed");
 export const getThreatActors = () => api.get("/threat-intel/actors");
 export const getThreatIOCs = () => api.get("/threat-intel/iocs");
+
+// Global Threat Map API - Real-time aggregated threats
+export const aggregateThreats = () => api.get("/threats/aggregate");
+
+// URL Scanner API - matches user's specification of POST /api/url/scan
+export const scanWebsite = (data) => api.post("/url/scan", data);
+
+// Phishing/Email Scanner API
+export const scanPhishing = (data) => api.post("/phishing/detect", data);
 
 // Customer Support
 export const getTickets = () => api.get("/support/tickets");
@@ -294,21 +366,78 @@ export const replyTicket = (id, data) => api.post(`/support/tickets/${id}/reply`
 export const updateTicketStatus = (id, data) => api.patch(`/support/tickets/${id}/status`, data);
 export const getSupportStats = () => api.get("/support/stats");
 
+// Emergency Command Center API
+export const emergencyAPI = {
+  // Get active emergencies
+  getActiveEmergencies: () => api.get('/emergency'),
+  // Get emergency statistics
+  getEmergencyStats: () => api.get('/emergency/stats'),
+  // Declare national emergency (superadmin only)
+  declareEmergency: (data) => api.post('/emergency/declare', data),
+  // Get emergency intelligence
+  getEmergencyIntelligence: (params = {}) => api.get('/emergency/intelligence', { params }),
+  // Get emergency details
+  getEmergencyDetails: (emergencyId) => api.get(`/emergency/${emergencyId}`),
+  // Execute emergency action
+  executeEmergencyAction: (emergencyId, data) => api.post(`/emergency/${emergencyId}/actions`, data),
+  // Update emergency protocols
+  updateEmergencyProtocols: (emergencyId, data) => api.put(`/emergency/${emergencyId}/protocols`, data),
+  // De-escalate emergency
+  deescalateEmergency: (emergencyId) => api.put(`/emergency/${emergencyId}/deescalate`),
+  // Notify agency
+  notifyAgency: (emergencyId, agencyId, data) => api.post(`/emergency/${emergencyId}/notify/${agencyId}`, data),
+  // Activate presidential alert (superadmin only)
+  activatePresidentialAlert: (emergencyId, data) => api.post(`/emergency/${emergencyId}/presidential-alert`, data),
+  // Get agency emergency status
+  getAgencyEmergencyStatus: (agencyId) => api.get(`/emergency/agency/${agencyId}/status`)
+};
+
 // Compliance Center
 export const getComplianceFrameworks = () => api.get("/compliance/frameworks");
 export const getComplianceControls = () => api.get("/compliance/controls");
 export const getComplianceGaps = () => api.get("/compliance/gaps");
 
+// Personal AI Assistant Chat APIs
+export const getAIAssistantMessages = () => api.get("/assistant/messages");
+export const sendAIAssistantMessage = (data) => api.post("/assistant/chat", data);
+export const getAIAssistantRecommendations = () => api.get("/assistant/recommendations");
+export const getAIAssistantContext = () => api.get("/assistant/context");
+export const getAIAssistantCapabilities = () => api.get("/assistant/capabilities");
+export const getAIAssistantInsights = () => api.get("/assistant/insights");
+export const requestAIAssistantHelp = (data) => api.post("/assistant/help", data);
+
 // AI Defense Bot
 export const getAIDefenseOverview = () => api.get("/ai-defense/overview");
-export const analyzeDefenseContext = (data) => api.post("/ai-defense/analyze-context", data);
+export const analyzeAIDefenseContext = (data) => api.post("/ai-defense/analyze-context", data);
 export const getAIDefenseActions = () => api.get("/ai-defense/actions");
 export const simulateDefenseAction = (data) => api.post("/ai-defense/simulate", data);
+export const sendDefenseCommand = (data) => api.post("/ai-defense/command", data);
 
 // AI Guardian
 export const getAIGuardianOverview = () => api.get("/ai-guardian/overview");
 export const getAIGuardianAlerts = () => api.get("/ai-guardian/alerts");
 export const getAIGuardianPolicies = () => api.get("/ai-guardian/policies");
 export const evaluateWithGuardian = (data) => api.post("/ai-guardian/evaluate", data);
+
+// Incident Response API
+export const incidentResponseAPI = {
+  processIncident: (data) => api.post('/incident-response/process', data),
+  getIncidents: (params) => api.get('/incident-response', { params }),
+  getIncidentDetails: (id) => api.get(`/incident-response/${id}`),
+  updateIncidentStatus: (id, data) => api.patch(`/incident-response/${id}/status`, data),
+  executeManualAction: (data) => api.post('/incident-response/action/execute', data),
+  getIncidentStats: () => api.get('/incident-response/stats/overview')
+};
+
+// AI-Powered Vulnerability Assessment
+export const aiVulnerabilityAPI = {
+  assessSingle: (vulnerability) => api.post('/ai-vulnerability/assess', { vulnerability }),
+  assessBatch: (vulnerabilities) => api.post('/ai-vulnerability/assess/batch', { vulnerabilities }),
+  assessSystem: (systemId, scanType = 'comprehensive') => api.get(`/ai-vulnerability/system/${systemId}/${scanType}`),
+  getRiskPredictions: (days = 30) => api.get(`/ai-vulnerability/predictions?days=${days}`),
+  getPatchRecommendations: (priority = 'all') => api.get(`/ai-vulnerability/patches?priority=${priority}`),
+  getComplianceImpact: (framework) => api.get(`/ai-vulnerability/compliance/${framework}`),
+  getInsights: () => api.get('/ai-vulnerability/insights')
+};
 
 export default api

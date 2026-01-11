@@ -1,6 +1,10 @@
 import { motion } from 'framer-motion'
-import { Lock, Eye, EyeOff, Plus, Search, Filter, Clock, Trash2, Key, FileText, CreditCard, Settings } from 'lucide-react'
+import { Lock, Eye, EyeOff, Plus, Search, Filter, Clock, Trash2, Key, FileText, CreditCard, Settings, RefreshCw, Download, Upload, Share2, AlertTriangle, Shield, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter.jsx'
+import PasswordGenerator from '../components/PasswordGenerator.jsx'
+import VaultImportExport from '../components/VaultImportExport.jsx'
+import VaultSecurityDashboard from '../components/VaultSecurityDashboard.jsx'
 import {
   unlockVault,
   addVaultItem,
@@ -333,6 +337,12 @@ function SecureVault() {
               ))}
             </div>
 
+            {/* Security Dashboard */}
+            <VaultSecurityDashboard
+              vaultItems={vaultItems}
+              activityLog={activityLog}
+            />
+
             {/* Activity Log Section */}
             <div className="bg-[#0f172a]/80 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6">
               <div className="flex items-center space-x-3 mb-4">
@@ -404,14 +414,52 @@ function SecureVault() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Value</label>
-                  <textarea
-                    placeholder="Item value (password, notes, API key, etc.)"
-                    value={newItem.value}
-                    onChange={(e) => setNewItem({ ...newItem, value: e.target.value })}
-                    rows={4}
-                    className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                  />
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Value {newItem.type === 'Password' && <span className="text-cyan-400">(Password)</span>}
+                  </label>
+                  {newItem.type === 'Password' ? (
+                    <div className="space-y-3">
+                      <textarea
+                        placeholder="Enter password manually or generate one below"
+                        value={newItem.value}
+                        onChange={(e) => setNewItem({ ...newItem, value: e.target.value })}
+                        rows={3}
+                        className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                      />
+                      
+                      {/* Password Strength Meter */}
+                      <div className="mt-2">
+                        <PasswordStrengthMeter 
+                          password={newItem.value}
+                          onStrengthChange={(score, feedback) => {
+                            // You can store the strength score if needed
+                            console.log('Password strength:', score, feedback)
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Password Generator */}
+                      <div className="mt-3 p-3 bg-slate-800/30 rounded-lg border border-slate-700/30">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RefreshCw className="w-4 h-4 text-cyan-400" />
+                          <span className="text-sm font-medium text-slate-300">Generate Secure Password</span>
+                        </div>
+                        <PasswordGenerator 
+                          onPasswordGenerated={(password) => {
+                            setNewItem({ ...newItem, value: password })
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <textarea
+                      placeholder="Item value (notes, API key, etc.)"
+                      value={newItem.value}
+                      onChange={(e) => setNewItem({ ...newItem, value: e.target.value })}
+                      rows={4}
+                      className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    />
+                  )}
                 </div>
 
                 <div>

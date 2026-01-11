@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SentinelAI Browser Guard</title>
+  <link rel="stylesheet" href="popup.css">
+  <!-- Security-themed fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="popup-container">
+    <!-- Header Section -->
+    <div id="header">
+      <div class="logo-section">
+        <div class="shield-container">
+          <div class="shield-icon" id="status-shield">🛡️</div>
+          <div class="shield-ping" id="shield-ping"></div>
+        </div>
+        <div class="brand">
+          <h1>SENTINELAI</h1>
+          <span>BROWSER GUARD</span>
+        </div>
+      </div>
+
+      <div class="status-indicator" id="global-status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">PROTECTING</span>
+      </div>
+    </div>
+
+    <!-- Current URL Section -->
+    <div class="current-url-section">
+      <div class="url-header">
+        <div class="url-label">CURRENT SITE</div>
+        <div class="scan-time" id="scan-time">--:--</div>
+      </div>
+
+      <div class="url-display" id="current-url">
+        <div class="url-text">Loading...</div>
+        <div class="url-risk" id="url-risk-indicator" style="display: none;">
+          <span class="risk-badge" id="risk-badge">SCANNING</span>
+        </div>
+      </div>
+
+      <div class="url-actions">
+        <button id="scan-button" class="action-btn scan-btn">
+          <span class="btn-icon">🔍</span>
+          <span>SCAN NOW</span>
+        </button>
+        <button id="phishing-scan-button" class="action-btn phishing-btn">
+          <span class="btn-icon">🎣</span>
+          <span>PHISHING SCAN</span>
+        </button>
+        <button id="details-button" class="action-btn details-btn" style="display: none;">
+          <span class="btn-icon">📋</span>
+          <span>VIEW REPORT</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Risk Assessment Section -->
+    <div class="risk-assessment" id="risk-assessment" style="display: none;">
+      <div class="assessment-header">
+        <h3>RISK ASSESSMENT</h3>
+        <div class="confidence-score" id="confidence-score">---</div>
+      </div>
+
+      <div class="risk-meter">
+        <div class="meter-background">
+          <div class="meter-fill" id="risk-meter-fill"></div>
+          <div class="meter-mask"></div>
+        </div>
+        <div class="meter-labels">
+          <span>LOW</span>
+          <span>MEDIUM</span>
+          <span>HIGH</span>
+        </div>
+      </div>
+
+      <div class="threat-details" id="threat-details" style="display: none;">
+        <div class="detail-header">
+          <span class="detail-icon">⚠️</span>
+          <span>DETECTED THREATS</span>
+        </div>
+        <ul id="threat-list" class="threat-list">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Scan History Section -->
+    <div class="scan-history">
+      <div class="history-header">
+        <h3>RECENT SCANS</h3>
+        <div class="scan-counter" id="scan-counter">0</div>
+      </div>
+
+      <div class="history-list" id="history-list">
+        <div class="empty-history">
+          <div class="empty-icon">🔍</div>
+          <div>No recent scans</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="settings-section">
+      <div class="settings-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" id="blocking-toggle" checked>
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Auto Block High-Risk Sites</span>
+        </label>
+      </div>
+
+      <div class="settings-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" id="notifications-toggle" checked>
+          <span class="toggle-slider"></span>
+          <span class="toggle-text">Show Notifications</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="extension-info">
+        <span>v1.0.0</span>
+        <span>Powered by SentinelAI</span>
+      </div>
+      <button class="visit-dashboard-btn" onclick="openDashboard()">
+        🏠 Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Hidden blocking page content (for when sites are blocked) -->
+  <div id="blocking-overlay" class="blocking-overlay" style="display: none;">
+    <div class="blocking-content">
+      <div class="blocking-icon">🚫</div>
+      <h2>DANGEROUS SITE BLOCKED</h2>
+      <p id="blocking-reason">This website has been identified as a high-risk security threat.</p>
+      <div class="blocking-actions">
+        <button class="go-back-btn" onclick="goBack()">Go Back</button>
+        <button class="continue-anyway-btn" onclick="continueAnyway()">Continue Anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

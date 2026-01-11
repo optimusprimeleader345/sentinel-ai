@@ -1,6 +1,12 @@
-import { useState, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Camera, Upload, Shield, AlertTriangle, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Camera, Upload, Shield, AlertTriangle, ThumbsUp, ThumbsDown, FileQuestion,
+  CheckCircle, XCircle, Clock, Target, Brain, Zap, Play, MessageSquare, Eye,
+  Globe, Network, Lock, Cpu, Settings, BarChart3, Activity, Layers,
+  Fingerprint, Microscope, Database, ChevronDown, ChevronRight,
+  RefreshCw, Wifi, WifiOff, Timer, AlertCircle, Zap as Lightning
+} from "lucide-react";
 import { deepfakeAPI } from '../lib/api.js'
 import {
   analyzeDeepfake,
@@ -10,6 +16,7 @@ import {
   explainDeepfake,
   getDeepfakeRecommendations
 } from '../lib/api.js'
+import SeverityBadge from '../components/SeverityBadge.jsx'
 
 function DeepfakeDetector() {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -22,6 +29,25 @@ function DeepfakeDetector() {
   const [recommendations, setRecommendations] = useState([])
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
+
+  // New advanced state variables
+  const [expandedSections, setExpandedSections] = useState({
+    models: false,
+    forensic: false,
+    timeline: true,
+    realTime: false
+  })
+  const [realTimeMode, setRealTimeMode] = useState(false)
+  const [streamStatus, setStreamStatus] = useState('disconnected')
+  const [detectionMode, setDetectionMode] = useState('standard')
+  const [externalAPIs, setExternalAPIs] = useState({
+    microsoftVideoAuth: false,
+    hivemind: true,
+    deepware: false
+  })
+  const [batchMode, setBatchMode] = useState(false)
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 })
+  const [confidenceThreshold, setConfidenceThreshold] = useState(65)
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0]
@@ -62,7 +88,14 @@ function DeepfakeDetector() {
       const response = await deepfakeAPI.analyze(selectedFile)
       const result = response.data
 
-      setAnalysisResult(result)
+      // Safely handle the response structure with fallbacks
+      setAnalysisResult({
+        ...result,
+        label: result.analysis?.isDeepfake ? 'fake' : 'real',
+        confidence: result.analysis?.confidence ?? 0,
+        details: result.analysis?.details ?? {},
+        metadata: result.metadata ?? {}
+      })
 
       // Fetch additional data
       const [forensicsRes, timelineRes, recsRes] = await Promise.all([
@@ -110,7 +143,241 @@ function DeepfakeDetector() {
           <FileQuestion className="w-8 h-8 text-cyan-400" />
           <h1 className="text-4xl font-bold neon-text">Deepfake Detector</h1>
         </motion.div>
-        <p className="text-slate-400 mb-8">AI-powered deepfake detection and analysis</p>
+        <p className="text-slate-400 mb-8">Enterprise-grade deepfake detection with AI model ensemble, real-time analysis, and advanced forensics</p>
+
+        {/* Advanced Controls Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-[#0f172a]/80 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 shadow-[0_0_20px_rgba(0,0,0,0.35)] mb-6"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <Settings className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Advanced Detection Controls
+              </h2>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-slate-400">Confidence Threshold</div>
+              <div className="flex items-center space-x-2 mt-1">
+                <input
+                  type="range"
+                  min="50"
+                  max="95"
+                  value={confidenceThreshold}
+                  onChange={(e) => setConfidenceThreshold(parseInt(e.target.value))}
+                  className="w-16"
+                />
+                <span className="text-sm text-cyan-400 font-medium">{confidenceThreshold}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Detection Mode */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-400 uppercase tracking-wide">Detection Mode</label>
+              <select
+                value={detectionMode}
+                onChange={(e) => setDetectionMode(e.target.value)}
+                className="w-full bg-slate-800/50 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-slate-300"
+              >
+                <option value="standard">Standard</option>
+                <option value="advanced">Advanced AI</option>
+                <option value="forensic">Digital Forensics</option>
+                <option value="military">Military Grade</option>
+              </select>
+            </div>
+
+            {/* Real-time Toggle */}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setRealTimeMode(!realTimeMode)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  realTimeMode ? 'bg-cyan-500' : 'bg-slate-600'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  realTimeMode ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400">Real-time</span>
+                <span className="text-xs text-cyan-400">Analysis</span>
+              </div>
+            </div>
+
+            {/* External APIs */}
+            <div className="space-y-2">
+              <label className="text-xs text-slate-400 uppercase tracking-wide">External APIs</label>
+              <div className="flex space-x-2">
+                {Object.entries(externalAPIs).map(([api, enabled]) => (
+                  <button
+                    key={api}
+                    onClick={() => setExternalAPIs(prev => ({ ...prev, [api]: !prev[api] }))}
+                    className={`px-2 py-1 rounded text-xs ${
+                      enabled ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-400' : 'bg-slate-700/50 border border-slate-600/50 text-slate-500'
+                    }`}
+                  >
+                    {api === 'microsoftVideoAuth' ? 'MSFT' : api === 'hivemind' ? 'Hive' : 'Deep'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Model Selection */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setExpandedSections(prev => ({ ...prev, models: !prev.models }))}
+                className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 rounded-lg text-white text-xs"
+              >
+                <Brain className="w-3 h-3" />
+                <span>Model Config</span>
+                <ChevronDown className={`w-3 h-3 transform transition-transform ${expandedSections.models ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Expanded Model Configuration */}
+          <AnimatePresence>
+            {expandedSections.models && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mt-4 border-t border-slate-700/50 pt-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {Object.entries({
+                    primaryDetector: { models: ['meso-4', 'xception', 'efficientnet', 'vit-face'] },
+                    biometricDetector: { models: ['face-forensics', 'face-morphing', 'identity-spoofing'] },
+                    temporalDetector: { models: ['motion-analysis', 'temporal-correlation', 'frame-consistency'] },
+                    forensicDetector: { models: ['compression-artifact', 'frequency-analysis', 'metadata-forensic'] }
+                  }).map(([detector, config]) => (
+                    <div key={detector} className="space-y-2">
+                      <h4 className="text-sm font-medium text-cyan-400 capitalize">{detector.replace('Detector', '')}</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {config.models.map((model, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-slate-700/50 text-xs rounded border border-slate-600/30">
+                            {model}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Live Stream Analysis Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="bg-[#0f172a]/80 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 shadow-[0_0_20px_rgba(0,0,0,0.35)] mb-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Camera className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Real-Time Stream Analysis
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              {streamStatus === 'connected' ? (
+                <Wifi className="w-5 h-5 text-green-400" />
+              ) : streamStatus === 'analyzing' ? (
+                <Timer className="w-5 h-5 text-yellow-400" />
+              ) : (
+                <WifiOff className="w-5 h-5 text-red-400" />
+              )}
+              <span className={`text-xs capitalize ${streamStatus === 'connected' ? 'text-green-400' : streamStatus === 'analyzing' ? 'text-yellow-400' : 'text-red-400'}`}>
+                {streamStatus}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setStreamStatus('analyzing')}
+              className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg hover:border-cyan-400/50 transition-all text-left"
+            >
+              <div className="flex items-center space-x-3 mb-2">
+                <Network className="w-6 h-6 text-cyan-400" />
+                <span className="text-slate-300 font-medium">WebRTC Stream</span>
+              </div>
+              <p className="text-slate-400 text-sm">Analyze live webcam feed for real-time deepfake detection</p>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setStreamStatus('analyzing')}
+              className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg hover:border-purple-400/50 transition-all text-left"
+            >
+              <div className="flex items-center space-x-3 mb-2">
+                <Activity className="w-6 h-6 text-purple-400" />
+                <span className="text-slate-300 font-medium">Screen Capture</span>
+              </div>
+              <p className="text-slate-400 text-sm">Monitor screen content for manipulated media playback</p>
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {/* Batch Processing Panel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className="bg-[#0f172a]/80 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 shadow-[0_0_20px_rgba(0,0,0,0.35)] mb-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <Layers className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Enterprise Batch Processing
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Database className="w-5 h-5 text-cyan-400" />
+              <span className="text-xs text-slate-400">Process Multiple Files</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                <Fingerprint className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                <h3 className="text-sm text-slate-300 mb-1">Dataset Verification</h3>
+                <p className="text-xs text-slate-500">Bulk verify large media collections for deepfake content</p>
+              </div>
+              <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                <Microscope className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                <h3 className="text-sm text-slate-300 mb-1">Forensic Analysis</h3>
+                <p className="text-xs text-slate-500">Detailed multi-angle forensic examination</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                <Lightning className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                <h3 className="text-sm text-slate-300 mb-1">Priority Scoring</h3>
+                <p className="text-xs text-slate-500">Auto-assign urgency based on detection confidence</p>
+              </div>
+              <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-700/50">
+                <Lock className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                <h3 className="text-sm text-slate-300 mb-1">Chain of Custody</h3>
+                <p className="text-xs text-slate-500">Maintain evidence integrity for legal proceedings</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* File Upload Component */}
         <motion.div
@@ -227,10 +494,10 @@ function DeepfakeDetector() {
                   {analysisResult.label === 'fake' ? <ThumbsDown /> : <ThumbsUp />}
                 </div>
                 <div className={`text-4xl font-bold mb-2 ${analysisResult.label === 'fake' ? 'text-red-400' : 'text-green-400'}`}>
-                  {analysisResult.label.toUpperCase()}
+                  {(analysisResult.label || 'unknown').toUpperCase()}
                 </div>
                 <div className="text-slate-400">Confidence Score</div>
-                <div className="text-3xl font-bold text-cyan-400 mb-2">{analysisResult.confidence}%</div>
+                <div className="text-3xl font-bold text-cyan-400 mb-2">{analysisResult.confidence || 0}%</div>
 
                 <div className="relative inline-block w-48 h-4 bg-slate-700 rounded-full mb-4">
                   <div

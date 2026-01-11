@@ -1,6 +1,6 @@
 import crypto from 'crypto';
+import { analyzeDeepfake } from '../utils/deepfakeAnalyzer.js';
 import {
-  mockAnalyzes,
   mockForensics,
   mockFrames,
   mockTimelines,
@@ -9,33 +9,82 @@ import {
 } from '../data/deepfakeMockData.js';
 
 // Analyze deepfake
-export const analyzeDeepfake = (req, res) => {
+export const analyzeDeepfakeController = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res.status(400).json({
+        error: 'No file uploaded',
+        status: 'error',
+        analysis: {
+          isDeepfake: false,
+          confidence: 0,
+          details: [],
+          frameAnalysis: []
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          source: "error"
+        }
+      });
     }
 
-    // Generate random analysis ID
+    // Generate analysis ID
     const analysisId = crypto.randomUUID();
 
-    // Randomly choose between fake and real for demo
-    const isFake = Math.random() > 0.5;
-    const analysis = mockAnalyzes[isFake ? 'analysis-001' : 'analysis-002'];
+    // Use real deepfake analysis
+    const analysisResult = await analyzeDeepfake(
+      req.file.buffer,
+      req.file.originalname,
+      { analysisId }
+    );
 
-    // Add file info
+    // Format response to match frontend expectations
     const result = {
-      ...analysis,
+      status: 'success',
       id: analysisId,
+      label: analysisResult.isDeepfake ? 'fake' : 'real',
+      confidence: analysisResult.confidence,
+      isVideo: req.file.mimetype.startsWith('video/'),
       filename: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
+      analysis: {
+        isDeepfake: analysisResult.isDeepfake,
+        confidence: analysisResult.confidence,
+        details: analysisResult.findings || [],
+        frameAnalysis: []
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        source: "ai-model"
+      },
+      // New fields for enhanced reporting
+      riskLevel: analysisResult.riskLevel,
+      findings: analysisResult.findings || [],
+      detectionMethods: analysisResult.detectionMethods || [],
+      analysisType: analysisResult.analysisType,
+      analysisSteps: analysisResult.analysisSteps || [],
+      summary: analysisResult.summary || {}
     };
 
     res.json(result);
   } catch (error) {
     console.error('Error analyzing deepfake:', error);
-    res.status(500).json({ error: 'Failed to analyze file' });
+    res.status(500).json({
+      status: 'error',
+      error: 'Failed to analyze file: ' + error.message,
+      analysis: {
+        isDeepfake: false,
+        confidence: 0,
+        details: [],
+        frameAnalysis: []
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        source: "error"
+      }
+    });
   }
 };
 

@@ -1,414 +1,823 @@
-import { motion } from 'framer-motion'
-import { Award, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import api from '../lib/api.js'
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Shield,
+  TrendingUp,
+  TrendingDown,
+  RefreshCw,
+  Download,
+  Settings,
+  Bell,
+  CheckCircle,
+  AlertTriangle,
+  Target,
+  BarChart3,
+  PieChart,
+  FileText,
+  Users,
+  Clock,
+  Award,
+  Filter,
+  Search,
+  Eye,
+  Zap,
+  Activity,
+  Calendar,
+  ChevronRight,
+  Star,
+  Layers,
+  Gauge
+} from 'lucide-react';
 
-// Circular Score Meter Component
-const ScoreMeter = ({ score = 75, riskLevel = 'fair' }) => {
-  const getColor = (level) => {
-    switch (level) {
-      case 'good': return '#10b981'
-      case 'fair': return '#f59e0b'
-      case 'poor': return '#f97316'
-      case 'critical': return '#ef4444'
-      default: return '#6b7280'
+const SecurityScore = () => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedView, setSelectedView] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsRefreshing(false);
+  };
+
+  // Security score data
+  const [scoreData] = useState({
+    currentScore: 94,
+    previousScore: 91,
+    trend: 'up',
+    changePercent: '+3.3%',
+    grade: 'Excellent',
+    lastUpdated: '2025-12-24 11:45:23'
+  });
+
+  // Score breakdown by category
+  const [scoreBreakdown] = useState([
+    {
+      category: 'Network Security',
+      score: 96,
+      weight: 25,
+      trend: 'up',
+      change: '+2.1%',
+      status: 'Excellent',
+      color: 'green'
+    },
+    {
+      category: 'Endpoint Protection',
+      score: 92,
+      weight: 20,
+      trend: 'up',
+      change: '+1.8%',
+      status: 'Good',
+      color: 'green'
+    },
+    {
+      category: 'Data Protection',
+      score: 89,
+      weight: 20,
+      trend: 'stable',
+      change: '+0.5%',
+      status: 'Good',
+      color: 'yellow'
+    },
+    {
+      category: 'Identity Management',
+      score: 95,
+      weight: 15,
+      trend: 'up',
+      change: '+4.2%',
+      status: 'Excellent',
+      color: 'green'
+    },
+    {
+      category: 'Compliance',
+      score: 98,
+      weight: 10,
+      trend: 'up',
+      change: '+1.0%',
+      status: 'Excellent',
+      color: 'green'
+    },
+    {
+      category: 'Incident Response',
+      score: 91,
+      weight: 10,
+      trend: 'up',
+      change: '+2.5%',
+      status: 'Good',
+      color: 'green'
     }
-  }
+  ]);
 
-  const getRiskText = (level) => {
-    switch (level) {
-      case 'good': return 'Low Risk'
-      case 'fair': return 'Medium Risk'
-      case 'poor': return 'High Risk'
-      case 'critical': return 'Critical Risk'
-      default: return 'Unknown'
+  // Risk assessment data
+  const [riskAssessment] = useState({
+    overallRisk: 'Low',
+    riskScore: 23,
+    criticalVulnerabilities: 0,
+    highRiskItems: 5,
+    mediumRiskItems: 12,
+    lowRiskItems: 28
+  });
+
+  // Industry benchmarks
+  const [benchmarks] = useState([
+    { industry: 'Financial Services', average: 89, percentile: 78, status: 'Above Average' },
+    { industry: 'Healthcare', average: 91, percentile: 82, status: 'Above Average' },
+    { industry: 'Technology', average: 87, percentile: 85, status: 'Above Average' },
+    { industry: 'Retail', average: 85, percentile: 88, status: 'Above Average' },
+    { industry: 'Manufacturing', average: 83, percentile: 91, status: 'Excellent' }
+  ]);
+
+  // Recommendations
+  const [recommendations] = useState([
+    {
+      id: 1,
+      title: 'Implement Multi-Factor Authentication',
+      description: 'Add MFA to all user accounts to prevent unauthorized access',
+      priority: 'High',
+      impact: 'High',
+      effort: 'Medium',
+      category: 'Identity Management',
+      estimatedTime: '2 weeks',
+      cost: '$15,000'
+    },
+    {
+      id: 2,
+      title: 'Upgrade Endpoint Detection',
+      description: 'Deploy advanced EDR solution across all endpoints',
+      priority: 'High',
+      impact: 'High',
+      effort: 'High',
+      category: 'Endpoint Protection',
+      estimatedTime: '4 weeks',
+      cost: '$45,000'
+    },
+    {
+      id: 3,
+      title: 'Enhance Network Segmentation',
+      description: 'Implement zero-trust network architecture',
+      priority: 'Medium',
+      impact: 'Medium',
+      effort: 'High',
+      category: 'Network Security',
+      estimatedTime: '6 weeks',
+      cost: '$30,000'
+    },
+    {
+      id: 4,
+      title: 'Regular Security Training',
+      description: 'Conduct quarterly security awareness training',
+      priority: 'Medium',
+      impact: 'Medium',
+      effort: 'Low',
+      category: 'Human Factors',
+      estimatedTime: '1 week',
+      cost: '$5,000'
     }
-  }
+  ]);
 
-  const circumference = 2 * Math.PI * 80
-  const strokeDasharray = circumference
-  const strokeDashoffset = circumference - (score / 100) * circumference
+  // Score history data
+  const [scoreHistory] = useState([
+    { date: '2025-12-24', score: 94, grade: 'Excellent' },
+    { date: '2025-12-17', score: 91, grade: 'Good' },
+    { date: '2025-12-10', score: 89, grade: 'Good' },
+    { date: '2025-12-03', score: 87, grade: 'Good' },
+    { date: '2025-11-26', score: 85, grade: 'Fair' },
+    { date: '2025-11-19', score: 83, grade: 'Fair' }
+  ]);
+
+  // Score simulator data
+  const [simulatorData, setSimulatorData] = useState({
+    currentScore: 94,
+    simulatedScore: 94,
+    improvements: {
+      mfa: { enabled: false, impact: 5 },
+      edr: { enabled: false, impact: 8 },
+      network: { enabled: false, impact: 6 },
+      training: { enabled: false, impact: 3 }
+    }
+  });
+
+  const Card = ({ children, className = "" }) => (
+    <div className={`bg-slate-800/80 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 shadow-2xl ${className}`}>
+      {children}
+    </div>
+  );
+
+  const calculateSimulatedScore = (improvements) => {
+    let simulatedScore = 94;
+    if (improvements.mfa.enabled) simulatedScore += improvements.mfa.impact;
+    if (improvements.edr.enabled) simulatedScore += improvements.edr.impact;
+    if (improvements.network.enabled) simulatedScore += improvements.network.impact;
+    if (improvements.training.enabled) simulatedScore += improvements.training.impact;
+    return Math.min(simulatedScore, 100);
+  };
+
+  const handleImprovementToggle = (improvement) => {
+    const newImprovements = {
+      ...simulatorData.improvements,
+      [improvement]: {
+        ...simulatorData.improvements[improvement],
+        enabled: !simulatorData.improvements[improvement].enabled
+      }
+    };
+    const simulatedScore = calculateSimulatedScore(newImprovements);
+    setSimulatorData({
+      ...simulatorData,
+      improvements: newImprovements,
+      simulatedScore
+    });
+  };
+
+  const filteredRecommendations = recommendations.filter(rec =>
+    rec.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    rec.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-[#0f172a]/80 rounded-xl border border-slate-700/50 p-8 shadow-[0_0_20px_rgba(139,92,246,0.3)] neon-glow"
-    >
-      <div className="flex flex-col items-center space-y-6">
-        <div className="relative w-48 h-48">
-          {/* Background circle */}
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              stroke="#334155"
-              strokeWidth="8"
-              fill="none"
-            />
-            {/* Progress circle */}
-            <circle
-              cx="80"
-              cy="80"
-              r="70"
-              stroke={getColor(riskLevel)}
-              strokeWidth="8"
-              fill="none"
-              strokeDasharray={strokeDasharray}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-1000 ease-out"
-            />
-          </svg>
-
-          {/* Score text */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-5xl font-bold text-white">{score}</div>
-            <div className="text-lg text-slate-300">Score</div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between mb-8"
+      >
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl shadow-lg">
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
+              Security Score Analytics
+            </h1>
+            <p className="text-slate-400 text-sm">Comprehensive security posture assessment and improvement planning</p>
           </div>
         </div>
-
-        <div className="text-center">
-          <h3 className="text-2xl font-bold text-white mb-2">{getRiskText(riskLevel)}</h3>
-          <p className="text-slate-400">Overall Security Rating</p>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-// Security Breakdown Cards Component
-const SecurityBreakdown = ({ breakdown }) => {
-  const CategoryCard = ({ category, data }) => {
-    const getStatusColor = (status) => {
-      if (status.includes('active') || status.includes('enabled') || status.includes('secure') ||
-          status.includes('up-to-date') || status.includes('verified') || status.includes('none') ||
-          status.includes('minimized') || status.includes('optimized')) {
-        return 'text-green-400'
-      } else if (status.includes('inactive') || status.includes('disabled') || status.includes('outdated') ||
-                 status.includes('insecure') || status.includes('weak') || status.includes('some') ||
-                 status.includes('active') || status.includes('detected') || status.includes('basic')) {
-        return 'text-red-400'
-      }
-      return 'text-yellow-400'
-    }
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-[#0f172a]/80 rounded-xl border border-slate-700/50 p-6 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-xl font-bold text-white">{data.title}</h4>
-          <div className="text-2xl font-bold text-cyan-400">{data.score}%</div>
-        </div>
-        <div className="space-y-3">
-          {data.items.map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-lg">{item.icon}</span>
-                <span className="text-slate-300">{item.label}</span>
-              </div>
-              <span className={`text-sm font-medium ${getStatusColor(item.status)}`}>
-                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-              </span>
+        <div className="flex items-center space-x-3">
+          {/* Critical Alerts Indicator */}
+          <div className="relative">
+            <Bell className="w-5 h-5 text-red-400" />
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-xs font-bold">{riskAssessment.criticalVulnerabilities}</span>
             </div>
-          ))}
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-slate-300 hover:text-white hover:border-blue-500/50 transition-all duration-200 flex items-center space-x-2 ${
+              isRefreshing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
         </div>
       </motion.div>
-    )
-  }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {Object.entries(breakdown).map(([key, data]) => (
-        <CategoryCard key={key} category={key} data={data} />
-      ))}
-    </div>
-  )
-}
-
-// Risk Factors List Component
-const RiskFactors = ({ factors }) => {
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'high': return 'text-red-400 border-red-400/30'
-      case 'medium': return 'text-yellow-400 border-yellow-400/30'
-      case 'low': return 'text-green-400 border-green-400/30'
-      default: return 'text-slate-400 border-slate-400/30'
-    }
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[#0f172a]/80 rounded-xl border border-slate-700/50 p-6 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
-    >
-      <div className="flex items-center space-x-2 mb-6">
-        <AlertTriangle className="w-6 h-6 text-yellow-400" />
-        <h3 className="text-xl font-bold text-white">Current Risk Factors</h3>
+      {/* View Tabs */}
+      <div className="flex space-x-1 mb-6 bg-slate-800/50 p-1 rounded-lg">
+        {[
+          { id: 'overview', label: 'Overview', icon: Target },
+          { id: 'breakdown', label: 'Score Details', icon: BarChart3 },
+          { id: 'trends', label: 'Trends', icon: TrendingUp },
+          { id: 'recommendations', label: 'Recommendations', icon: CheckCircle },
+          { id: 'simulator', label: 'Score Simulator', icon: Zap },
+          { id: 'benchmarks', label: 'Benchmarks', icon: Users }
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSelectedView(tab.id)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedView === tab.id
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
-      <div className="space-y-4">
-        {factors.map((factor) => (
-          <div key={factor.id} className={`flex items-center space-x-3 p-4 rounded-lg border ${getSeverityColor(factor.severity)} bg-black/20`}>
-            <span className="text-2xl">{factor.icon}</span>
-            <div className="flex-1">
-              <h4 className="font-medium text-white">{factor.title}</h4>
-              <p className="text-sm text-slate-400">{factor.description}</p>
-            </div>
-            <div className={`text-xs font-medium px-2 py-1 rounded-full uppercase ${getSeverityColor(factor.severity)} bg-black/30`}>
-              {factor.severity}
-            </div>
+
+      {/* Overview Tab */}
+      {selectedView === 'overview' && (
+        <div className="space-y-8">
+          {/* Score Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                title: 'Current Score',
+                value: `${scoreData.currentScore}/100`,
+                change: scoreData.changePercent,
+                trend: scoreData.trend,
+                icon: Gauge,
+                color: 'pink'
+              },
+              {
+                title: 'Grade',
+                value: scoreData.grade,
+                change: 'Top 15%',
+                trend: 'up',
+                icon: Award,
+                color: 'purple'
+              },
+              {
+                title: 'Risk Level',
+                value: riskAssessment.overallRisk,
+                change: `${riskAssessment.riskScore}/100`,
+                trend: 'down',
+                icon: Shield,
+                color: 'green'
+              },
+              {
+                title: 'Last Updated',
+                value: '2 min ago',
+                change: scoreData.lastUpdated,
+                trend: 'stable',
+                icon: Clock,
+                color: 'blue'
+              }
+            ].map((metric, index) => (
+              <motion.div
+                key={metric.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2 bg-${metric.color}-500/20 rounded-lg`}>
+                      <metric.icon className={`w-5 h-5 text-${metric.color}-400`} />
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      {metric.trend === 'up' ? (
+                        <TrendingUp className="w-3 h-3 text-green-400" />
+                      ) : metric.trend === 'down' ? (
+                        <TrendingDown className="w-3 h-3 text-red-400" />
+                      ) : null}
+                      <span className={`text-xs ${metric.trend === 'up' ? 'text-green-400' : metric.trend === 'down' ? 'text-red-400' : 'text-gray-400'}`}>
+                        {metric.change}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">{metric.value}</div>
+                  <div className="text-sm text-slate-400">{metric.title}</div>
+                </Card>
+              </motion.div>
+            ))}
           </div>
-        ))}
-      </div>
-    </motion.div>
-  )
-}
 
-// Recommendations Component
-const Recommendations = ({ recommendations }) => {
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'text-red-400 border-red-400/30'
-      case 'medium': return 'text-yellow-400 border-yellow-400/30'
-      case 'low': return 'text-green-400 border-green-400/30'
-      default: return 'text-slate-400 border-slate-400/30'
-    }
-  }
-
-  const getEffortColor = (effort) => {
-    switch (effort) {
-      case 'low': return 'text-green-400'
-      case 'medium': return 'text-yellow-400'
-      case 'high': return 'text-red-400'
-      default: return 'text-slate-400'
-    }
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[#0f172a]/80 rounded-xl border border-slate-700/50 p-6 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
-    >
-      <div className="flex items-center space-x-2 mb-6">
-        <CheckCircle className="w-6 h-6 text-green-400" />
-        <h3 className="text-xl font-bold text-white">Improvement Recommendations</h3>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {recommendations.map((rec) => (
-          <div key={rec.id} className={`p-4 rounded-lg border ${getPriorityColor(rec.priority)} bg-black/20`}>
-            <h4 className="font-medium text-white mb-2">{rec.title}</h4>
-            <p className="text-sm text-slate-400 mb-3">{rec.description}</p>
-            <div className="flex items-center justify-between text-xs">
-              <span className={`font-medium ${getPriorityColor(rec.priority)}`}>
-                {rec.priority} priority
-              </span>
-              <span className={`font-medium ${getEffortColor(rec.effort)}`}>
-                {rec.effort} effort
-              </span>
+          {/* Risk Assessment Summary */}
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-3">
+                <AlertTriangle className="w-6 h-6 text-orange-400" />
+                <span>Risk Assessment Summary</span>
+              </h2>
+              <span className="text-xs text-slate-400">Updated in real-time</span>
             </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  )
-}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-400 mb-2">{riskAssessment.overallRisk}</div>
+                <div className="text-slate-400 text-sm">Overall Risk Level</div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mt-2">
+                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '23%' }}></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-red-400 mb-2">{riskAssessment.criticalVulnerabilities}</div>
+                <div className="text-slate-400 text-sm">Critical Issues</div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mt-2">
+                  <div className="bg-red-500 h-2 rounded-full" style={{ width: '0%' }}></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-orange-400 mb-2">{riskAssessment.highRiskItems}</div>
+                <div className="text-slate-400 text-sm">High Risk Items</div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mt-2">
+                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: '17%' }}></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-400 mb-2">{riskAssessment.mediumRiskItems}</div>
+                <div className="text-slate-400 text-sm">Medium Risk Items</div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mt-2">
+                  <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '40%' }}></div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
-// Security Timeline Chart Component
-const SecurityTimeline = ({ history }) => {
-  // Simple line chart using SVG
-  const maxScore = 100
-  const minScore = 0
-  const width = 600
-  const height = 200
-  const padding = 40
+      {/* Score Breakdown Tab */}
+      {selectedView === 'breakdown' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-3">
+                <BarChart3 className="w-6 h-6 text-purple-400" />
+                <span>Security Score Breakdown</span>
+              </h2>
+              <span className="text-xs text-slate-400">Weighted by business impact</span>
+            </div>
+            <div className="space-y-4">
+              {scoreBreakdown.map((category, index) => (
+                <div key={category.category} className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-white font-medium">{category.category}</span>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        category.status === 'Excellent' ? 'bg-green-500/20 text-green-400' :
+                        category.status === 'Good' ? 'bg-blue-500/20 text-blue-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {category.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <span className="text-slate-400 text-sm">{category.weight}% weight</span>
+                      <div className="flex items-center space-x-1">
+                        {category.trend === 'up' ? (
+                          <TrendingUp className="w-3 h-3 text-green-400" />
+                        ) : category.trend === 'down' ? (
+                          <TrendingDown className="w-3 h-3 text-red-400" />
+                        ) : null}
+                        <span className={`text-sm font-semibold ${category.trend === 'up' ? 'text-green-400' : category.trend === 'down' ? 'text-red-400' : 'text-gray-400'}`}>
+                          {category.change}
+                        </span>
+                      </div>
+                      <span className="text-white font-bold text-lg">{category.score}/100</span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all duration-1000 ${
+                        category.score >= 90 ? 'bg-green-500' :
+                        category.score >= 80 ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}
+                      style={{ width: `${category.score}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
 
-  const chartWidth = width - (padding * 2)
-  const chartHeight = height - (padding * 2)
+      {/* Trends Tab */}
+      {selectedView === 'trends' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-3">
+                <TrendingUp className="w-6 h-6 text-cyan-400" />
+                <span>Score Trends & Analytics</span>
+              </h2>
+              <div className="flex items-center space-x-2">
+                <select className="px-3 py-1 bg-slate-800/50 border border-slate-600/50 rounded text-slate-300 text-sm">
+                  <option>Last 30 Days</option>
+                  <option>Last 90 Days</option>
+                  <option>Last 6 Months</option>
+                  <option>Last Year</option>
+                </select>
+              </div>
+            </div>
+            <div className="h-64 bg-slate-800/30 rounded-lg flex items-center justify-center">
+              <div className="text-center text-slate-400">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Interactive Score Trend Chart</p>
+                <p className="text-sm">Historical data visualization</p>
+              </div>
+            </div>
+          </Card>
 
-  // Create path points
-  const points = history.slice(0, 14).map((item, index) => {
-    const x = padding + (index / 13) * chartWidth
-    const y = padding + ((maxScore - item.score) / (maxScore - minScore)) * chartHeight
-    return `${x},${y}`
-  }).join(' ')
+          {/* Historical Scores Table */}
+          <Card>
+            <h3 className="text-lg font-bold text-white mb-4">Historical Scores</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700">
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Date</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Score</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Grade</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scoreHistory.map((entry, index) => (
+                    <tr key={entry.date} className="border-b border-slate-800/30 hover:bg-slate-800/20">
+                      <td className="py-3 px-4 text-slate-300">{entry.date}</td>
+                      <td className="py-3 px-4">
+                        <span className="text-white font-semibold">{entry.score}/100</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          entry.grade === 'Excellent' ? 'bg-green-500/20 text-green-400' :
+                          entry.grade === 'Good' ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {entry.grade}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        {index > 0 && (
+                          <span className={`flex items-center space-x-1 ${
+                            entry.score > scoreHistory[index - 1].score ? 'text-green-400' :
+                            entry.score < scoreHistory[index - 1].score ? 'text-red-400' :
+                            'text-gray-400'
+                          }`}>
+                            {entry.score > scoreHistory[index - 1].score ? (
+                              <TrendingUp className="w-3 h-3" />
+                            ) : entry.score < scoreHistory[index - 1].score ? (
+                              <TrendingDown className="w-3 h-3" />
+                            ) : null}
+                            <span className="text-xs">
+                              {entry.score > scoreHistory[index - 1].score ? '+' : ''}
+                              {entry.score - scoreHistory[index - 1].score}
+                            </span>
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[#0f172a]/80 rounded-xl border border-slate-700/50 p-6 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
-    >
-      <div className="flex items-center space-x-2 mb-6">
-        <TrendingUp className="w-6 h-6 text-blue-400" />
-        <h3 className="text-xl font-bold text-white">Security Score Timeline</h3>
-        <span className="text-sm text-slate-400">(Last 30 days)</span>
-      </div>
-
-      <div className="w-full overflow-x-auto">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
-          {/* Grid lines */}
-          {[0, 25, 50, 75, 100].map(score => {
-            const y = padding + ((maxScore - score) / (maxScore - minScore)) * chartHeight
-            return (
-              <g key={score}>
-                <line
-                  x1={padding}
-                  y1={y}
-                  x2={width - padding}
-                  y2={y}
-                  stroke="#334155"
-                  strokeWidth="1"
-                />
-                <text x={padding - 10} y={y + 4} textAnchor="end" fill="#64748b" fontSize="12">
-                  {score}
-                </text>
-              </g>
-            )
-          })}
-
-          {/* Main line */}
-          <polyline
-            points={points}
-            fill="none"
-            stroke="#10b981"
-            strokeWidth="3"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          />
-
-          {/* Point markers */}
-          {history.slice(0, 14).map((item, index) => {
-            const x = padding + (index / 13) * chartWidth
-            const y = padding + ((maxScore - item.score) / (maxScore - minScore)) * chartHeight
-            return (
-              <circle
-                key={`point-${index}`}
-                cx={x}
-                cy={y}
-                r="4"
-                fill="#10b981"
-                stroke="#0f172a"
-                strokeWidth="2"
+      {/* Recommendations Tab */}
+      {selectedView === 'recommendations' && (
+        <div className="space-y-6">
+          {/* Search and Filter */}
+          <div className="flex flex-wrap gap-4">
+            <div className="relative flex-1 min-w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search recommendations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/25"
               />
-            )
-          })}
-        </svg>
-      </div>
+            </div>
+            <select className="px-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:border-blue-400">
+              <option>All Priorities</option>
+              <option>High Priority</option>
+              <option>Medium Priority</option>
+              <option>Low Priority</option>
+            </select>
+          </div>
 
-      {/* Legend */}
-      <div className="flex items-center justify-center space-x-6 mt-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-sm text-slate-400">Score Trend</span>
+          {/* Recommendations Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredRecommendations.map((rec, index) => (
+              <motion.div
+                key={rec.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white mb-2">{rec.title}</h3>
+                      <p className="text-slate-400 text-sm mb-3">{rec.description}</p>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          rec.priority === 'High' ? 'bg-red-500/20 text-red-400' :
+                          rec.priority === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-green-500/20 text-green-400'
+                        }`}>
+                          {rec.priority} Priority
+                        </span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-slate-400 text-xs">{rec.category}</span>
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="text-2xl font-bold text-cyan-400 mb-1">{rec.impact === 'High' ? 'A' : rec.impact === 'Medium' ? 'B' : 'C'}</div>
+                      <div className="text-xs text-slate-400">Impact</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-4">
+                      <span className="text-slate-400">Effort: <span className={`font-semibold ${
+                        rec.effort === 'Low' ? 'text-green-400' :
+                        rec.effort === 'Medium' ? 'text-yellow-400' :
+                        'text-red-400'
+                      }`}>{rec.effort}</span></span>
+                      <span className="text-slate-400">Time: <span className="text-white font-semibold">{rec.estimatedTime}</span></span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-cyan-400 font-bold">{rec.cost}</div>
+                      <div className="text-xs text-slate-400">Estimated Cost</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex space-x-2">
+                    <button className="flex-1 px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-500/30 transition-colors">
+                      View Details
+                    </button>
+                    <button className="flex-1 px-3 py-2 bg-cyan-500/20 text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-500/30 transition-colors">
+                      Implement
+                    </button>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
-    </motion.div>
-  )
-}
+      )}
 
-function SecurityScore() {
-  const [scoreData, setScoreData] = useState({ score: 75, level: 'Advanced', riskLevel: 'fair' })
-  const [breakdown, setBreakdown] = useState(null)
-  const [riskFactors, setRiskFactors] = useState([])
-  const [recommendations, setRecommendations] = useState([])
-  const [history, setHistory] = useState([])
-  const [loading, setLoading] = useState(true)
+      {/* Score Simulator Tab */}
+      {selectedView === 'simulator' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-3">
+                <Zap className="w-6 h-6 text-yellow-400" />
+                <span>Security Score Simulator</span>
+              </h2>
+              <span className="text-xs text-slate-400">What-if scenario analysis</span>
+            </div>
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [scoreRes, breakdownRes, factorsRes, recsRes, historyRes] = await Promise.all([
-          api.get('/security/score'),
-          api.get('/security/breakdown'),
-          api.get('/security/risk-factors'),
-          api.get('/security/recommendations'),
-          api.get('/security/history')
-        ])
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Current vs Simulated Score */}
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="text-6xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+                    {simulatorData.simulatedScore}
+                  </div>
+                  <div className="text-slate-400 text-sm">Simulated Score</div>
+                  <div className={`text-sm font-semibold ${simulatorData.simulatedScore > scoreData.currentScore ? 'text-green-400' : 'text-red-400'}`}>
+                    {simulatorData.simulatedScore > scoreData.currentScore ? '+' : ''}
+                    {simulatorData.simulatedScore - scoreData.currentScore} from current ({scoreData.currentScore})
+                  </div>
+                </div>
 
-        setScoreData(scoreRes.data)
-        setBreakdown(breakdownRes.data)
-        setRiskFactors(factorsRes.data)
-        setRecommendations(recsRes.data)
-        setHistory(historyRes.data)
+                <div className="space-y-4">
+                  {Object.entries(simulatorData.improvements).map(([key, improvement]) => (
+                    <div key={key} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                      <div>
+                        <div className="text-white font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
+                        <div className="text-slate-400 text-sm">+{improvement.impact} points</div>
+                      </div>
+                      <button
+                        onClick={() => handleImprovementToggle(key)}
+                        className={`w-12 h-6 rounded-full transition-colors ${
+                          improvement.enabled ? 'bg-blue-500' : 'bg-slate-600'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                          improvement.enabled ? 'translate-x-6' : 'translate-x-0.5'
+                        }`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        setLoading(false)
-      } catch (error) {
-        console.error('Error fetching security data:', error)
-        setLoading(false)
-      }
-    }
+              {/* Impact Visualization */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white">Impact Breakdown</h3>
+                <div className="space-y-3">
+                  {Object.entries(simulatorData.improvements)
+                    .filter(([_, improvement]) => improvement.enabled)
+                    .map(([key, improvement]) => (
+                      <div key={key} className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                        <div className="flex items-center space-x-3">
+                          <CheckCircle className="w-5 h-5 text-green-400" />
+                          <span className="text-white font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                        </div>
+                        <span className="text-green-400 font-bold">+{improvement.impact}</span>
+                      </div>
+                    ))}
+                </div>
 
-    fetchData()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0a0e27] p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center text-slate-400">Loading security data...</div>
+                {Object.values(simulatorData.improvements).some(i => i.enabled) && (
+                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg border border-blue-500/30">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white mb-2">
+                        {Object.values(simulatorData.improvements).filter(i => i.enabled).reduce((sum, i) => sum + i.impact, 0)} Point Improvement
+                      </div>
+                      <div className="text-slate-400 text-sm">Total potential score increase</div>
+                      <button className="mt-3 px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg text-white font-semibold hover:from-blue-600 hover:to-cyan-600 transition-colors">
+                        Generate Implementation Plan
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  return (
-    <div className="min-h-screen bg-[#0a0e27] p-8">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center space-x-3 mb-8"
-        >
-          <Award className="w-8 h-8 text-cyan-400" />
-          <h1 className="text-4xl font-bold neon-text">Security Score</h1>
-        </motion.div>
-        <p className="text-slate-400 mb-8">Your comprehensive security rating and insights</p>
+      {/* Benchmarks Tab */}
+      {selectedView === 'benchmarks' && (
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center space-x-3">
+                <Users className="w-6 h-6 text-indigo-400" />
+                <span>Industry Benchmarks & Comparisons</span>
+              </h2>
+              <span className="text-xs text-slate-400">Anonymous peer comparisons</span>
+            </div>
 
-        {/* Security Score Meter */}
-        <div className="mb-12">
-          <ScoreMeter score={scoreData.score} riskLevel={scoreData.riskLevel} />
+            <div className="space-y-4">
+              {benchmarks.map((benchmark, index) => (
+                <div key={benchmark.industry} className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-white font-medium">{benchmark.industry}</span>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        benchmark.status === 'Excellent' ? 'bg-green-500/20 text-green-400' :
+                        benchmark.status === 'Above Average' ? 'bg-blue-500/20 text-blue-400' :
+                        'bg-yellow-500/20 text-yellow-400'
+                      }`}>
+                        {benchmark.status}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-cyan-400">{benchmark.percentile}th</div>
+                      <div className="text-xs text-slate-400">Percentile Rank</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-4">
+                      <span className="text-slate-400">Industry Avg: <span className="text-white font-semibold">{benchmark.average}</span></span>
+                      <span className="text-slate-400">Your Score: <span className="text-blue-400 font-semibold">{scoreData.currentScore}</span></span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {benchmark.percentile >= 75 ? (
+                        <Star className="w-4 h-4 text-yellow-400" />
+                      ) : benchmark.percentile >= 50 ? (
+                        <TrendingUp className="w-4 h-4 text-blue-400" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4 text-red-400" />
+                      )}
+                      <span className={`text-xs font-semibold ${
+                        benchmark.percentile >= 75 ? 'text-yellow-400' :
+                        benchmark.percentile >= 50 ? 'text-blue-400' :
+                        'text-red-400'
+                      }`}>
+                        {benchmark.percentile >= 75 ? 'Top Performer' :
+                         benchmark.percentile >= 50 ? 'Above Average' :
+                         'Needs Improvement'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-700 rounded-full h-2 mt-3">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full"
+                      style={{ width: `${benchmark.percentile}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Export & Reporting */}
+          <Card>
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-3">
+              <Download className="w-5 h-5 text-green-400" />
+              <span>Reports & Exports</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-green-500/50 transition-colors text-left">
+                <FileText className="w-6 h-6 text-green-400 mb-2" />
+                <div className="text-white font-semibold">Executive Summary</div>
+                <div className="text-slate-400 text-sm">PDF Report</div>
+              </button>
+              <button className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-blue-500/50 transition-colors text-left">
+                <BarChart3 className="w-6 h-6 text-blue-400 mb-2" />
+                <div className="text-white font-semibold">Detailed Analytics</div>
+                <div className="text-slate-400 text-sm">Excel Export</div>
+              </button>
+              <button className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-purple-500/50 transition-colors text-left">
+                <Settings className="w-6 h-6 text-purple-400 mb-2" />
+                <div className="text-white font-semibold">Compliance Report</div>
+                <div className="text-slate-400 text-sm">Regulatory Format</div>
+              </button>
+            </div>
+          </Card>
         </div>
-
-        {/* Security Breakdown Cards */}
-        {breakdown && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-6">Security Breakdown</h2>
-            <SecurityBreakdown breakdown={breakdown} />
-          </div>
-        )}
-
-        {/* Risk Factors */}
-        {riskFactors.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-6">Risk Factors</h2>
-            <RiskFactors factors={riskFactors} />
-          </div>
-        )}
-
-        {/* Recommendations */}
-        {recommendations.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-6">Recommendations</h2>
-            <Recommendations recommendations={recommendations} />
-          </div>
-        )}
-
-        {/* Security Timeline */}
-        {history.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-6">Score Progress</h2>
-            <SecurityTimeline history={history} />
-          </div>
-        )}
-      </div>
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default SecurityScore
+export default SecurityScore;

@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "SentinelAI Browser Guard",
+  "version": "1.0.0",
+  "description": "Real-time URL threat scanning powered by SentinelAI - automatically detects phishing, malicious domains, and suspicious activity",
+  "author": "SentinelAI Team",
+
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting",
+    "activeTab",
+    "webNavigation"
+  ],
+
+  "host_permissions": [
+    "*://*/"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SentinelAI Browser Guard",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png"
+    }
+  },
+
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+
+  "commands": {
+    "toggle_blocking": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+B",
+        "mac": "Command+Shift+B"
+      },
+      "description": "Toggle automatic site blocking"
+    }
+  }
+}

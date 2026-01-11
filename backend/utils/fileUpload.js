@@ -41,13 +41,17 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-// Create upload middleware
+// Create multer instance (not pre-configured middleware)
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
     fileSize: 50 * 1024 * 1024 // 50MB
   }
-}).single('file');
+});
 
-export { upload };
+// Create specific middleware for different field names
+const uploadFile = upload.single('file');
+const uploadLogFile = upload.single('logFile');
+
+export { upload, uploadFile, uploadLogFile };

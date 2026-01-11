@@ -21,4 +21,26 @@ router.get('/feed', optionalAuth, getThreatFeed)
 router.get('/mitre', optionalAuth, getMitreMatrix)
 router.get('/correlation', optionalAuth, getCorrelationEngine)
 
+// Global Threat Map - Real-time aggregated threats
+router.get('/aggregate', async (req, res) => {
+  try {
+    const { aggregateThreats } = await import('../utils/threatIntelService.js')
+    const threats = await aggregateThreats()
+
+    res.json({
+      success: true,
+      data: threats,
+      count: threats.length,
+      timestamp: new Date().toISOString()
+    })
+  } catch (error) {
+    console.error('Aggregate threats error:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to aggregate threats',
+      message: error.message
+    })
+  }
+})
+
 export default router
