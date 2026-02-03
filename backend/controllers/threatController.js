@@ -1,30 +1,108 @@
-import { threatOverviewData, iocLookupData } from '../data/threatData.js'
+import Threat from '../models/Threat.js'
+import { threatOverviewData } from '../data/threatData.js' // Fallback data
+import threatIntelFeeds from '../utils/threatIntelFeeds.js'
 
 export const getThreats = async (req, res) => {
   try {
-    // Add some randomization to mock real-time data
-    const totalAttacks = threatOverviewData.totalAttacks24h + Math.floor(Math.random() * 50)
+    // REAL: Query from MongoDB
+    const now = new Date()
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
+    // Get active threats from last 24 hours
+    const activeThreats = await Threat.find({
+      status: 'active',
+      createdAt: { $gte: last24Hours }
+    })
+      .sort({ 'intelligence.riskScore': -1, createdAt: -1 })
+      .limit(50)
+      .lean()
+
+    // Get blocked/mitigated threats
+    const blockedAttacks = await Threat.find({
+      status: 'mitigated',
+      createdAt: { $gte: last24Hours }
+    })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+
+    // Aggregate statistics
+    const stats = await Threat.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: last24Hours }
+        }
+      },
+      {
+        $group: {
+          _id: '$severity',
+          count: { $sum: 1 }
+        }
+      }
+    ])
+
+    const criticalThreats = stats.find(s => s._id === 'critical')?.count || 0
+    const highThreats = stats.find(s => s._id === 'high')?.count || 0
+    const totalAttacks24h = activeThreats.length
+
+    // Determine risk level
+    let riskLevel = 'LOW'
+    if (criticalThreats > 5 || totalAttacks24h > 100) riskLevel = 'HIGH'
+    else if (criticalThreats > 2 || totalAttacks24h > 50) riskLevel = 'MEDIUM'
+
+    // Format response to match frontend expectations
     const data = {
-      ...threatOverviewData,
-      totalAttacks24h: totalAttacks,
-      // Ensure required properties are present
-      activeThreats: threatOverviewData.recentAttacks || [],
-      blockedAttacks: threatOverviewData.recentAttacks?.filter(attack => attack.level === 'High') || [],
-      recentEvents: threatOverviewData.recentAttacks || [],
-      riskLevel: threatOverviewData.criticalThreats > 5 ? 'HIGH' : threatOverviewData.criticalThreats > 2 ? 'MEDIUM' : 'LOW',
-      aiPredictions: threatOverviewData.aiRecommendations || []
+      totalAttacks24h,
+      criticalThreats,
+      highThreats,
+      activeThreats: activeThreats.map(threat => ({
+        id: threat._id.toString(),
+        type: threat.type,
+        severity: threat.severity,
+        level: threat.severity,
+        source: threat.source,
+        description: threat.metadata?.description || 'Threat detected',
+        timestamp: threat.createdAt,
+        riskScore: threat.intelligence?.riskScore || 50,
+        confidence: threat.confidence
+      })),
+      blockedAttacks: blockedAttacks.map(threat => ({
+        id: threat._id.toString(),
+        type: threat.type,
+        severity: threat.severity,
+        level: threat.severity,
+        source: threat.source,
+        timestamp: threat.createdAt
+      })),
+      recentEvents: activeThreats.slice(0, 10).map(threat => ({
+        id: threat._id.toString(),
+        type: threat.type,
+        severity: threat.severity,
+        timestamp: threat.createdAt
+      })),
+      riskLevel,
+      severityLevels: {
+        critical: criticalThreats,
+        high: highThreats,
+        medium: stats.find(s => s._id === 'medium')?.count || 0,
+        low: stats.find(s => s._id === 'low')?.count || 0
+      },
+      aiPredictions: [] // Can be enhanced with AI predictions later
     }
 
     res.json(data)
   } catch (error) {
     console.error('Get threat overview error:', error)
-    res.status(500).json({
-      message: 'Server error fetching threat overview',
-      activeThreats: [],
-      blockedAttacks: [],
-      recentEvents: [],
-      riskLevel: 'LOW',
-      aiPredictions: []
+    // Fallback to mock data if database fails
+    const totalAttacks = threatOverviewData.totalAttacks24h + Math.floor(Math.random() * 50)
+    res.json({
+      ...threatOverviewData,
+      totalAttacks24h: totalAttacks,
+      activeThreats: threatOverviewData.recentAttacks || [],
+      blockedAttacks: threatOverviewData.recentAttacks?.filter(attack => attack.level === 'High') || [],
+      recentEvents: threatOverviewData.recentAttacks || [],
+      riskLevel: threatOverviewData.criticalThreats > 5 ? 'HIGH' : threatOverviewData.criticalThreats > 2 ? 'MEDIUM' : 'LOW',
+      aiPredictions: threatOverviewData.aiRecommendations || []
     })
   }
 }
@@ -37,39 +115,82 @@ export const lookupIOC = async (req, res) => {
       return res.status(400).json({ message: 'Query parameter is required' })
     }
 
-    let result = null
+    // Determine IOC type
     let type = 'unknown'
-
-    // Check if it's an IP
     if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(query)) {
-      result = iocLookupData.ip[query]
       type = 'ip'
-    }
-    // Check if it's a domain
-    else if (query.includes('.') && query.length > 3) {
-      result = iocLookupData.domain[query]
+    } else if (query.includes('.') && query.length > 3) {
       type = 'domain'
-    }
-    // Check if it's a hash
-    else if (/^[a-f0-9]{32,64}$/i.test(query)) {
-      result = iocLookupData.hash[query]
+    } else if (/^[a-f0-9]{32,64}$/i.test(query)) {
       type = 'hash'
     }
 
-    if (!result) {
+    // REAL: Check database first
+    const dbThreat = await Threat.findOne({
+      'indicator.value': query,
+      'indicator.type': type
+    }).lean()
+
+    if (dbThreat) {
       return res.json({
-        found: false,
+        found: true,
         type: type,
         query: query,
-        message: 'No threat intelligence found for this query'
+        data: {
+          indicator: dbThreat.indicator.value,
+          type: dbThreat.type,
+          severity: dbThreat.severity,
+          confidence: dbThreat.confidence,
+          source: dbThreat.source,
+          description: dbThreat.metadata?.description || 'Threat found in database',
+          firstSeen: dbThreat.intelligence?.firstSeen,
+          lastSeen: dbThreat.intelligence?.lastSeen,
+          riskScore: dbThreat.intelligence?.riskScore
+        }
       })
     }
 
+    // REAL: Use threat intelligence feeds if not in database
+    const intelService = new threatIntelFeeds()
+    const threatIntel = await intelService.comprehensiveLookup(query, type)
+
+    if (threatIntel && threatIntel.confidence > 0 && threatIntel.type !== 'clean') {
+      // Save to database for future lookups
+      const userId = req.user?.userId
+      await intelService.saveToDatabase({
+        indicator: {
+          type: type,
+          value: query
+        },
+        type: threatIntel.type,
+        severity: threatIntel.severity,
+        confidence: threatIntel.confidence,
+        source: threatIntel.source,
+        metadata: {
+          description: threatIntel.details,
+          ...threatIntel.metadata
+        },
+        intelligence: {
+          riskScore: threatIntel.confidence,
+          firstSeen: new Date(),
+          lastSeen: new Date()
+        }
+      }, userId)
+
+      return res.json({
+        found: true,
+        type: type,
+        query: query,
+        data: threatIntel
+      })
+    }
+
+    // No threat found
     res.json({
-      found: true,
+      found: false,
       type: type,
       query: query,
-      data: result
+      message: 'No threat intelligence found for this query'
     })
   } catch (error) {
     console.error('IOC lookup error:', error)
@@ -102,19 +223,42 @@ export const getGlobalThreats = async (req, res) => {
 
 export const createThreat = async (req, res) => {
   try {
-    const threatData = {
-      id: Date.now(),
-      ...req.body,
-      createdAt: new Date()
-    }
+    const userId = req.user?.userId
 
-    // In practice, save to database
-    console.log('Threat created:', threatData)
+    // REAL: Save to MongoDB
+    const threat = new Threat({
+      indicator: {
+        type: req.body.indicatorType || 'ioc',
+        value: req.body.indicatorValue || req.body.indicator
+      },
+      type: req.body.type || 'other',
+      severity: req.body.severity || 'medium',
+      confidence: req.body.confidence || 50,
+      source: req.body.source || 'manual',
+      metadata: {
+        description: req.body.description || '',
+        attackVector: req.body.attackVector,
+        targetedEntity: req.body.targetedEntity,
+        ...req.body.metadata
+      },
+      intelligence: {
+        riskScore: req.body.riskScore || 50,
+        firstSeen: new Date(),
+        lastSeen: new Date()
+      },
+      createdBy: userId
+    })
 
-    res.json(threatData)
+    const savedThreat = await threat.save()
+
+    res.status(201).json({
+      id: savedThreat._id.toString(),
+      ...savedThreat.toObject(),
+      createdAt: savedThreat.createdAt
+    })
   } catch (error) {
     console.error('Create threat error:', error)
-    res.status(500).json({ message: 'Server error creating threat' })
+    res.status(500).json({ message: 'Server error creating threat', error: error.message })
   }
 }
 
@@ -123,19 +267,29 @@ export const updateThreat = async (req, res) => {
     const { id } = req.params
     const updates = req.body
 
-    const updatedThreat = {
-      id: parseInt(id),
-      ...updates,
-      updatedAt: new Date()
+    // REAL: Update in MongoDB
+    const threat = await Threat.findByIdAndUpdate(
+      id,
+      {
+        ...updates,
+        'intelligence.lastSeen': new Date(),
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    )
+
+    if (!threat) {
+      return res.status(404).json({ message: 'Threat not found' })
     }
 
-    // In practice, update in database
-    console.log('Threat updated:', updatedThreat)
-
-    res.json(updatedThreat)
+    res.json({
+      id: threat._id.toString(),
+      ...threat.toObject(),
+      updatedAt: threat.updatedAt
+    })
   } catch (error) {
     console.error('Update threat error:', error)
-    res.status(500).json({ message: 'Server error updating threat' })
+    res.status(500).json({ message: 'Server error updating threat', error: error.message })
   }
 }
 
@@ -143,13 +297,24 @@ export const deleteThreat = async (req, res) => {
   try {
     const { id } = req.params
 
-    // In practice, delete from database
-    console.log('Threat deleted:', id)
+    // REAL: Delete from MongoDB (or mark as inactive)
+    const threat = await Threat.findByIdAndUpdate(
+      id,
+      { status: 'inactive' }, // Soft delete - mark as inactive
+      { new: true }
+    )
 
-    res.json({ id: parseInt(id), deleted: true })
+    if (!threat) {
+      return res.status(404).json({ message: 'Threat not found' })
+    }
+
+    // Optionally hard delete:
+    // await Threat.findByIdAndDelete(id)
+
+    res.json({ id: id, deleted: true, status: 'inactive' })
   } catch (error) {
     console.error('Delete threat error:', error)
-    res.status(500).json({ message: 'Server error deleting threat' })
+    res.status(500).json({ message: 'Server error deleting threat', error: error.message })
   }
 }
 
@@ -197,6 +362,32 @@ export const getTrends = async (req, res) => {
 
 export const getThreatFeed = async (req, res) => {
   try {
+    // REAL: Get recent threats from database
+    const threats = await Threat.find({
+      status: 'active'
+    })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean()
+
+    const threatFeed = threats.map(threat => ({
+      id: threat._id.toString(),
+      type: threat.type,
+      severity: threat.severity,
+      level: threat.severity,
+      source: threat.source,
+      target: threat.metadata?.targetedEntity || 'Corporate Network',
+      vector: threat.metadata?.attackVector || threat.type,
+      timestamp: threat.createdAt,
+      description: threat.metadata?.description || 'Threat detected',
+      confidence: threat.confidence,
+      riskScore: threat.intelligence?.riskScore || 50
+    }))
+
+    res.json({ threats: threatFeed })
+  } catch (error) {
+    console.error('Get threat feed error:', error)
+    // Fallback to mock data
     const threatFeed = threatOverviewData.recentAttacks.map(attack => ({
       ...attack,
       severity: attack.level,
@@ -205,11 +396,7 @@ export const getThreatFeed = async (req, res) => {
       vector: attack.type,
       timestamp: attack.timestamp
     }))
-
     res.json({ threats: threatFeed })
-  } catch (error) {
-    console.error('Get threat feed error:', error)
-    res.status(500).json({ message: 'Server error fetching threat feed' })
   }
 }
 

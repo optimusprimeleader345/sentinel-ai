@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import Conversation from '../models/Conversation.js'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'mock-key',
@@ -61,15 +62,105 @@ export const analyze = async (req, res) => {
   }
 }
 
+import Conversation from '../models/Conversation.js'
+
 export const botChat = async (req, res) => {
   try {
-    const { message } = req.body
+    const { message, conversationId } = req.body
+    const userId = req.user?.userId
 
     if (!message) {
       return res.status(400).json({ message: 'Message is required' })
     }
 
-    // Mock AI bot responses
+    // REAL: Use OpenAI with conversation context
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'mock-key') {
+      try {
+        // Get or create conversation
+        let conversation = null
+        if (conversationId) {
+          conversation = await Conversation.findById(conversationId)
+        } else if (userId) {
+          // Find active conversation or create new one
+          conversation = await Conversation.findOne({
+            userId,
+            isActive: true
+          }).sort({ lastMessageAt: -1 })
+
+          if (!conversation) {
+            conversation = await Conversation.create({
+              userId,
+              messages: [],
+              title: 'Security Assistant Chat',
+              isActive: true
+            })
+          }
+        }
+
+        // Build conversation history
+        const messages = conversation?.messages || []
+        const systemMessage = {
+          role: 'system',
+          content: 'You are a cybersecurity expert assistant for SentinelAI. Provide helpful, accurate security advice. Be concise and professional. Focus on practical security recommendations.'
+        }
+
+        // Prepare messages for OpenAI
+        const openAIMessages = [
+          systemMessage,
+          ...messages.slice(-10).map(m => ({ // Last 10 messages for context
+            role: m.role,
+            content: m.content
+          })),
+          {
+            role: 'user',
+            content: message
+          }
+        ]
+
+        // Call OpenAI
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: openAIMessages,
+          temperature: 0.7,
+          max_tokens: 500
+        })
+
+        const aiResponse = completion.choices[0].message.content
+
+        // Save conversation to database
+        if (conversation) {
+          conversation.messages.push(
+            { role: 'user', content: message },
+            { role: 'assistant', content: aiResponse }
+          )
+          conversation.lastMessageAt = new Date()
+          await conversation.save()
+        } else if (userId) {
+          // Create new conversation if user is logged in
+          await Conversation.create({
+            userId,
+            messages: [
+              { role: 'user', content: message },
+              { role: 'assistant', content: aiResponse }
+            ],
+            title: 'Security Assistant Chat',
+            isActive: true
+          })
+        }
+
+        return res.json({
+          response: aiResponse,
+          timestamp: new Date().toISOString(),
+          conversationId: conversation?._id?.toString(),
+          model: 'gpt-4o-mini'
+        })
+      } catch (openaiError) {
+        console.error('OpenAI error:', openaiError.message)
+        // Fall through to mock response
+      }
+    }
+
+    // Fallback to mock responses if OpenAI not configured
     const responses = [
       'I\'ve analyzed your system and detected no immediate threats. All security protocols are functioning normally.',
       'I recommend enabling two-factor authentication for enhanced security.',
@@ -83,6 +174,7 @@ export const botChat = async (req, res) => {
     res.json({
       response: randomResponse,
       timestamp: new Date().toISOString(),
+      note: 'Using mock response - configure OPENAI_API_KEY for AI-powered chat'
     })
   } catch (error) {
     console.error('AI bot error:', error)

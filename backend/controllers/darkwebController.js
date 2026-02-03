@@ -1,4 +1,7 @@
-// Mock dark web breach data
+import axios from 'axios'
+import Breach from '../models/Breach.js'
+
+// Fallback mock data
 const mockBreaches = [
   {
     id: '1',
@@ -21,14 +24,169 @@ const mockBreaches = [
 export const checkEmail = async (req, res) => {
   try {
     const { email } = req.query
+    const userId = req.user?.userId
 
     if (!email) {
       return res.status(400).json({ message: 'Email parameter is required' })
     }
 
-    // Mock check - in real app, this would query a breach database
-    const breaches = mockBreaches.filter(b => b.email === email)
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' })
+    }
 
+    // REAL: Check database first (cached results)
+    const cachedBreaches = await Breach.find({
+      email: email.toLowerCase(),
+      checkedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Cache for 7 days
+    }).sort({ checkedAt: -1 })
+
+    if (cachedBreaches.length > 0) {
+      const leaks = cachedBreaches.map(b => ({
+        id: b._id.toString(),
+        email: b.email,
+        breachSource: b.breachName,
+        leakedData: b.leakedData,
+        severity: b.severity,
+        detectedAt: b.breachDate || b.checkedAt
+      }))
+
+      return res.json({
+        email,
+        leaksFound: leaks.length,
+        leaks,
+        severity: leaks.length > 0 
+          ? leaks.some(b => b.severity === 'critical') ? 'critical' : 
+            leaks.some(b => b.severity === 'high') ? 'high' : 'medium'
+          : 'none',
+        recommendation: leaks.length > 0
+          ? 'Your email was found in data breaches. Please change your passwords immediately.'
+          : 'No leaks found for this email address.',
+        cached: true
+      })
+    }
+
+    // REAL: Use HaveIBeenPwned API
+    const hibpApiKey = process.env.HIBP_API_KEY
+    if (hibpApiKey) {
+      try {
+        const response = await axios.get(
+          `https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(email)}`,
+          {
+            headers: {
+              'hibp-api-key': hibpApiKey,
+              'User-Agent': 'SentinelAI-CyberDefense-Platform'
+            },
+            timeout: 10000
+          }
+        )
+
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          // Save breaches to database
+          const breachPromises = response.data.map(breach => {
+            const leakedData = []
+            if (breach.DataClasses) {
+              breach.DataClasses.forEach(dataClass => {
+                if (dataClass.includes('Email')) leakedData.push('email')
+                if (dataClass.includes('Password')) leakedData.push('password')
+                if (dataClass.includes('Usernames')) leakedData.push('username')
+                if (dataClass.includes('Phone')) leakedData.push('phone')
+                if (dataClass.includes('Addresses')) leakedData.push('address')
+                if (dataClass.includes('Credit')) leakedData.push('credit_card')
+                if (breach.DataClasses.length === 0) leakedData.push('other')
+              })
+            }
+
+            const severity = leakedData.includes('password') || leakedData.includes('credit_card') 
+              ? 'critical' 
+              : leakedData.length > 2 
+                ? 'high' 
+                : 'medium'
+
+            return Breach.create({
+              email: email.toLowerCase(),
+              breachName: breach.Name,
+              breachDate: breach.BreachDate ? new Date(breach.BreachDate) : new Date(),
+              leakedData: leakedData.length > 0 ? leakedData : ['email'],
+              severity,
+              source: 'HaveIBeenPwned',
+              description: breach.Description || '',
+              recordCount: breach.PwnCount || 0,
+              userId,
+              verified: true
+            }).catch(err => {
+              // Ignore duplicate errors
+              if (err.code !== 11000) console.error('Error saving breach:', err)
+            })
+          })
+
+          await Promise.allSettled(breachPromises)
+
+          // Fetch saved breaches
+          const savedBreaches = await Breach.find({
+            email: email.toLowerCase()
+          }).sort({ checkedAt: -1 }).limit(20)
+
+          const leaks = savedBreaches.map(b => ({
+            id: b._id.toString(),
+            email: b.email,
+            breachSource: b.breachName,
+            leakedData: b.leakedData,
+            severity: b.severity,
+            detectedAt: b.breachDate || b.checkedAt
+          }))
+
+          return res.json({
+            email,
+            leaksFound: leaks.length,
+            leaks,
+            severity: leaks.length > 0 
+              ? leaks.some(b => b.severity === 'critical') ? 'critical' : 
+                leaks.some(b => b.severity === 'high') ? 'high' : 'medium'
+              : 'none',
+            recommendation: leaks.length > 0
+              ? 'Your email was found in data breaches. Please change your passwords immediately.'
+              : 'No leaks found for this email address.',
+          })
+        } else {
+          // No breaches found - save this result too
+          await Breach.create({
+            email: email.toLowerCase(),
+            breachName: 'No Breaches Found',
+            leakedData: [],
+            severity: 'low',
+            source: 'HaveIBeenPwned',
+            userId,
+            verified: true
+          }).catch(() => {}) // Ignore errors
+
+          return res.json({
+            email,
+            leaksFound: 0,
+            leaks: [],
+            severity: 'none',
+            recommendation: 'No leaks found for this email address.',
+          })
+        }
+      } catch (hibpError) {
+        if (hibpError.response?.status === 404) {
+          // No breaches found
+          return res.json({
+            email,
+            leaksFound: 0,
+            leaks: [],
+            severity: 'none',
+            recommendation: 'No leaks found for this email address.',
+          })
+        }
+        console.error('HaveIBeenPwned API error:', hibpError.message)
+        // Fall through to mock data fallback
+      }
+    }
+
+    // Fallback to mock data if API not configured or fails
+    const breaches = mockBreaches.filter(b => b.email === email)
     res.json({
       email,
       leaksFound: breaches.length,
@@ -39,6 +197,7 @@ export const checkEmail = async (req, res) => {
       recommendation: breaches.length > 0
         ? 'Your email was found in data breaches. Please change your passwords immediately.'
         : 'No leaks found for this email address.',
+      note: 'Using mock data - configure HIBP_API_KEY for real breach checking'
     })
   } catch (error) {
     console.error('Check email error:', error)
@@ -50,7 +209,39 @@ export const getBreaches = async (req, res) => {
   try {
     const userId = req.user?.userId
 
-    // Return mock breach data
+    // REAL: Get breaches from database
+    const query = userId ? { userId } : {}
+    const breaches = await Breach.find(query)
+      .sort({ checkedAt: -1 })
+      .limit(100)
+      .lean()
+
+    if (breaches.length > 0) {
+      const formattedBreaches = breaches.map(b => ({
+        id: b._id.toString(),
+        email: b.email,
+        breachSource: b.breachName,
+        leakedData: b.leakedData,
+        severity: b.severity,
+        detectedAt: b.breachDate || b.checkedAt,
+        verified: b.verified
+      }))
+
+      const summary = {
+        critical: breaches.filter(b => b.severity === 'critical').length,
+        high: breaches.filter(b => b.severity === 'high').length,
+        medium: breaches.filter(b => b.severity === 'medium').length,
+        low: breaches.filter(b => b.severity === 'low').length,
+      }
+
+      return res.json({
+        totalBreaches: breaches.length,
+        breaches: formattedBreaches,
+        summary,
+      })
+    }
+
+    // Fallback to mock data if database is empty
     res.json({
       totalBreaches: mockBreaches.length,
       breaches: mockBreaches,
@@ -60,6 +251,7 @@ export const getBreaches = async (req, res) => {
         medium: 0,
         low: 0,
       },
+      note: 'Using mock data - no breaches in database'
     })
   } catch (error) {
     console.error('Get breaches error:', error)
