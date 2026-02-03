@@ -183,7 +183,6 @@ import {
   ShieldX,
   UserPlus,
   UserMinus,
-  UserShield,
   AlertTriangle as AlertIcon,
   TrendingUp as UpIcon,
   TrendingDown as DownIcon
@@ -252,7 +251,7 @@ const CustomerSafetyDashboard = () => {
     {
       id: 'account',
       name: 'Account Safety Risk',
-      icon: UserShield,
+      icon: ShieldCheck,
       level: 'HIGH',
       score: 78,
       trend: 'increasing',
@@ -395,7 +394,7 @@ const CustomerSafetyDashboard = () => {
                   <span className="text-xs text-slate-300">People-First Protection</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <UserShield className="w-4 h-4 text-purple-400 animate-pulse" />
+                  <ShieldCheck className="w-4 h-4 text-purple-400 animate-pulse" />
                   <span className="text-xs text-slate-300">2,847 Users Protected</span>
                 </div>
               </div>
@@ -404,8 +403,9 @@ const CustomerSafetyDashboard = () => {
             <div className="flex items-center space-x-2">
               <Shield className="w-4 h-4 text-purple-400 animate-pulse" />
             </div>
+          </div>
 
-            <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
             <div className="bg-purple-800/60 backdrop-blur-xl border border-purple-600/30 rounded-lg p-3">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2">
@@ -434,7 +434,7 @@ const CustomerSafetyDashboard = () => {
         <div className="flex space-x-1 mb-8 bg-purple-800/60 backdrop-blur-xl border border-purple-600/30 rounded-xl p-2">
           {[
             { id: 'safety-overview', label: 'Safety Overview', icon: BarChart3 },
-            { id: 'account-monitor', label: 'Account Monitor', icon: UserShield },
+            { id: 'account-monitor', label: 'Account Monitor', icon: ShieldCheck },
             { id: 'ai-risk-detection', label: 'AI Risk Detection', icon: Brain },
             { id: 'insider-prevention', label: 'Insider Prevention', icon: Eye },
             { id: 'intervention-panel', label: 'Intervention Panel', icon: ShieldAlert },
@@ -471,7 +471,7 @@ const CustomerSafetyDashboard = () => {
             >
               {/* Customer Safety Metrics Dashboard */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <SafetyGlassCard title="Users Protected" icon={UserShield} riskLevel="LOW">
+                <SafetyGlassCard title="Users Protected" icon={ShieldCheck} riskLevel="LOW">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-purple-400 mb-2">2,847</div>
                     <div className="text-sm text-slate-400">Active Safety Monitoring</div>
@@ -620,7 +620,7 @@ const CustomerSafetyDashboard = () => {
             >
               {/* Account Safety Monitoring Dashboard */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <SafetyGlassCard title="Login Anomaly Detection" icon={UserShield} status="ACTIVE">
+                <SafetyGlassCard title="Login Anomaly Detection" icon={ShieldCheck} status="ACTIVE">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-300 text-sm">Suspicious Logins</span>
@@ -823,7 +823,7 @@ const CustomerSafetyDashboard = () => {
                     <div className="text-sm text-slate-400">AI Detection Accuracy</div>
                   </div>
                   <div className="text-center p-6 bg-violet-500/10 border border-violet-500/30 rounded-lg">
-                    <UserShield className="w-12 h-12 text-violet-400 mx-auto mb-3" />
+                    <ShieldCheck className="w-12 h-12 text-violet-400 mx-auto mb-3" />
                     <div className="text-3xl font-bold text-violet-400 mb-1">1,247</div>
                     <div className="text-sm text-slate-400">Users Analyzed</div>
                   </div>
@@ -1059,7 +1059,7 @@ const CustomerSafetyDashboard = () => {
                       <div className="text-slate-400 text-xs">Force reset recommendation</div>
                     </button>
                     <button className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg hover:bg-green-500/20 transition-colors">
-                      <Shield className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                      <ShieldCheck className="w-8 h-8 text-green-400 mx-auto mb-2" />
                       <div className="text-green-400 font-medium text-sm">Enforce MFA</div>
                       <div className="text-slate-400 text-xs">Require 2FA setup</div>
                     </button>
@@ -1120,7 +1120,7 @@ const CustomerSafetyDashboard = () => {
               <SafetyGlassCard title="People Safety Metrics (Board-Level)" icon={TrendingUp} status="EXECUTIVE">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                   <div className="text-center p-6 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <UserShield className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                    <ShieldCheck className="w-12 h-12 text-green-400 mx-auto mb-3" />
                     <div className="text-3xl font-bold text-green-400 mb-1">2,847</div>
                     <div className="text-sm text-slate-400">Users Protected</div>
                     <div className="text-xs text-green-400 mt-2">+12% this week</div>
