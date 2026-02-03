@@ -142,7 +142,12 @@ const threatSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
-  organization: String,
+  organization: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: false, // Optional for backward compatibility
+    index: true
+  },
   notes: [{
     author: String,
     content: String,
@@ -164,7 +169,9 @@ threatSchema.index({ status: 1 })
 threatSchema.index({ source: 1 })
 threatSchema.index({ confidence: -1 })
 threatSchema.index({ 'intelligence.riskScore': -1 })
+threatSchema.index({ organization: 1 }) // Organization index
 threatSchema.index({ createdAt: -1 })
+threatSchema.index({ organization: 1, status: 1 }) // Compound index
 
 // Virtual for activity status
 threatSchema.virtual('isActive').get(function() {

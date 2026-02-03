@@ -1,8 +1,14 @@
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
 
-const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'secret123', {
+const generateToken = (user) => {
+  return jwt.sign({ 
+    userId: user._id,
+    email: user.email,
+    role: user.role,
+    organizationId: user.organization?._id || user.organization || null,
+    organizationRole: user.organizationRole || null
+  }, process.env.JWT_SECRET || 'secret123', {
     expiresIn: '7d',
   })
 }
@@ -67,7 +73,9 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
 
-    const token = generateToken(user._id)
+    // Populate organization if exists
+    await user.populate('organization')
+    const token = generateToken(user)
 
     res.json({
       message: 'Login successful',

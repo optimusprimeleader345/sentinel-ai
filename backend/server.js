@@ -11,6 +11,10 @@ import logger from './utils/logger.js'
 import { apiLimiter, authLimiter, aiLimiter, intensiveLimiter, uploadLimiter } from './middleware/rateLimiter.js'
 import { sanitizeMongo, preventHPP, xssProtection, requestSizeLimiter, securityHeaders } from './middleware/security.js'
 import { apiVersioning, getApiVersionInfo } from './middleware/apiVersioning.js'
+import { initSentry, sentryRequestHandler, sentryErrorHandler } from './utils/sentry.js'
+import metricsMiddleware from './middleware/metricsMiddleware.js'
+import { performanceMonitoring } from './middleware/performanceMonitoring.js'
+import alertingSystem from './utils/alerting.js'
 
 // Import routes
 import authRoutes from './routes/authRoutes.js'
@@ -56,12 +60,20 @@ import riskScoringRoutes from './routes/riskScoringRoutes.js'
 import complianceDriftRoutes from './routes/complianceDriftRoutes.js'
 import socLoadBalancerRoutes from './routes/socLoadBalancerRoutes.js'
 import executiveBriefRoutes from './routes/executiveBriefRoutes.js'
+import organizationRoutes from './routes/organizationRoutes.js'
+import metricsRoutes from './routes/metricsRoutes.js'
 
 // Load environment variables
 dotenv.config()
 
+// Initialize Sentry (must be before other imports)
+initSentry()
+
 const app = express()
 const PORT = process.env.PORT || 5000
+
+// Sentry request handler (must be first)
+app.use(sentryRequestHandler)
 
 // Security Middleware (order matters!)
 app.use(helmet({
@@ -105,6 +117,12 @@ app.use(xssProtection) // XSS protection
 // HTTP request logging with Winston
 app.use(morgan('combined', { stream: logger.stream }))
 
+// Performance monitoring
+app.use(performanceMonitoring)
+
+// Metrics middleware (must be after logging)
+app.use(metricsMiddleware)
+
 // API Versioning middleware
 app.use(apiVersioning)
 
@@ -147,6 +165,8 @@ app.get('/api/v1/version', getApiVersionInfo)
 
 // API Routes
 app.use('/api/auth', authRoutes)
+app.use('/api/organizations', organizationRoutes)
+app.use('/api/metrics', metricsRoutes) // Prometheus metrics endpoint
 app.use('/api/ai', aiRoutes)
 app.use('/api/threats', advancedThreatRoutes)
 app.use('/api/system', systemRoutes)
@@ -189,6 +209,9 @@ app.use('/api/v1/superadmin/compliance-drift', complianceDriftRoutes)  // AI Com
 app.use('/api/v1/superadmin/soc-load-balancer', socLoadBalancerRoutes)  // Autonomous SOC Load Balancer
 app.use('/api/v1/superadmin/executive-brief', executiveBriefRoutes)  // AI Executive Brief Generator
 app.use('/behavior', behaviorRoutes)
+
+// Sentry error handler (must be before other error handlers)
+app.use(sentryErrorHandler)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -241,9 +264,14 @@ server.listen(PORT, () => {
   logger.info(`📡 API available at http://localhost:${PORT}/api`)
   logger.info(`🔌 WebSocket available at ws://localhost:${PORT}`)
   logger.info(`💚 Health check: http://localhost:${PORT}/api/health`)
+  logger.info(`📊 Metrics: http://localhost:${PORT}/api/metrics`)
   logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
   logger.info(`📊 Rate limiting: Enabled`)
   logger.info(`🔒 Security middleware: Active`)
+  logger.info(`📈 Monitoring: Prometheus + Sentry enabled`)
+  
+  // Start alerting system
+  alertingSystem.startMonitoring()
   
   // Also log to console for development
   if (process.env.NODE_ENV !== 'production') {
@@ -251,5 +279,6 @@ server.listen(PORT, () => {
     console.log(`📡 API available at http://localhost:${PORT}/api`)
     console.log(`🔌 WebSocket available at ws://localhost:${PORT}`)
     console.log(`💚 Health check: http://localhost:${PORT}/api/health`)
+    console.log(`📊 Metrics: http://localhost:${PORT}/api/metrics`)
   }
 })

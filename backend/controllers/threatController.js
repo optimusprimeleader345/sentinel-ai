@@ -1,6 +1,7 @@
 import Threat from '../models/Threat.js'
 import { threatOverviewData } from '../data/threatData.js' // Fallback data
 import threatIntelFeeds from '../utils/threatIntelFeeds.js'
+import { ensureOrganizationIsolation } from '../middleware/tenantIsolation.js'
 
 export const getThreats = async (req, res) => {
   try {
@@ -8,30 +9,35 @@ export const getThreats = async (req, res) => {
     const now = new Date()
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-    // Get active threats from last 24 hours
-    const activeThreats = await Threat.find({
-      status: 'active',
-      createdAt: { $gte: last24Hours }
-    })
+    // Get active threats from last 24 hours (with organization isolation)
+    const activeThreats = await Threat.find(
+      ensureOrganizationIsolation(req, {
+        status: 'active',
+        createdAt: { $gte: last24Hours }
+      })
+    )
       .sort({ 'intelligence.riskScore': -1, createdAt: -1 })
       .limit(50)
       .lean()
 
-    // Get blocked/mitigated threats
-    const blockedAttacks = await Threat.find({
-      status: 'mitigated',
-      createdAt: { $gte: last24Hours }
-    })
+    // Get blocked/mitigated threats (with organization isolation)
+    const blockedAttacks = await Threat.find(
+      ensureOrganizationIsolation(req, {
+        status: 'mitigated',
+        createdAt: { $gte: last24Hours }
+      })
+    )
       .sort({ createdAt: -1 })
       .limit(20)
       .lean()
 
-    // Aggregate statistics
+    // Aggregate statistics (with organization isolation)
+    const matchQuery = ensureOrganizationIsolation(req, {
+      createdAt: { $gte: last24Hours }
+    })
     const stats = await Threat.aggregate([
       {
-        $match: {
-          createdAt: { $gte: last24Hours }
-        }
+        $match: matchQuery
       },
       {
         $group: {
@@ -125,11 +131,13 @@ export const lookupIOC = async (req, res) => {
       type = 'hash'
     }
 
-    // REAL: Check database first
-    const dbThreat = await Threat.findOne({
-      'indicator.value': query,
-      'indicator.type': type
-    }).lean()
+    // REAL: Check database first (with organization isolation)
+    const dbThreat = await Threat.findOne(
+      ensureOrganizationIsolation(req, {
+        'indicator.value': query,
+        'indicator.type': type
+      })
+    ).lean()
 
     if (dbThreat) {
       return res.json({
@@ -225,7 +233,7 @@ export const createThreat = async (req, res) => {
   try {
     const userId = req.user?.userId
 
-    // REAL: Save to MongoDB
+    // REAL: Save to MongoDB (with organization)
     const threat = new Threat({
       indicator: {
         type: req.body.indicatorType || 'ioc',
@@ -246,7 +254,8 @@ export const createThreat = async (req, res) => {
         firstSeen: new Date(),
         lastSeen: new Date()
       },
-      createdBy: userId
+      createdBy: userId,
+      organization: req.organizationId || null
     })
 
     const savedThreat = await threat.save()
@@ -267,9 +276,10 @@ export const updateThreat = async (req, res) => {
     const { id } = req.params
     const updates = req.body
 
-    // REAL: Update in MongoDB
-    const threat = await Threat.findByIdAndUpdate(
-      id,
+    // REAL: Update in MongoDB (with organization filter)
+    const query = ensureOrganizationIsolation(req, { _id: id })
+    const threat = await Threat.findOneAndUpdate(
+      query,
       {
         ...updates,
         'intelligence.lastSeen': new Date(),
@@ -297,9 +307,10 @@ export const deleteThreat = async (req, res) => {
   try {
     const { id } = req.params
 
-    // REAL: Delete from MongoDB (or mark as inactive)
-    const threat = await Threat.findByIdAndUpdate(
-      id,
+    // REAL: Delete from MongoDB (or mark as inactive) (with organization filter)
+    const query = ensureOrganizationIsolation(req, { _id: id })
+    const threat = await Threat.findOneAndUpdate(
+      query,
       { status: 'inactive' }, // Soft delete - mark as inactive
       { new: true }
     )
@@ -362,10 +373,12 @@ export const getTrends = async (req, res) => {
 
 export const getThreatFeed = async (req, res) => {
   try {
-    // REAL: Get recent threats from database
-    const threats = await Threat.find({
-      status: 'active'
-    })
+    // REAL: Get recent threats from database (with organization isolation)
+    const threats = await Threat.find(
+      ensureOrganizationIsolation(req, {
+        status: 'active'
+      })
+    )
       .sort({ createdAt: -1 })
       .limit(50)
       .lean()

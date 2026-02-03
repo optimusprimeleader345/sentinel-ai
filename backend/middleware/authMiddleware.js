@@ -11,6 +11,13 @@ export const authMiddleware = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123')
       req.user = decoded
+      
+      // Organization info is already in JWT if user has one
+      if (decoded.organizationId) {
+        req.user.organizationId = decoded.organizationId
+        req.user.organizationRole = decoded.organizationRole
+      }
+      
       next()
     } catch (error) {
       return res.status(401).json({ message: 'Token is not valid' })
@@ -28,6 +35,12 @@ export const optionalAuth = async (req, res, next) => {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123')
         req.user = decoded
+        
+        // Organization info is already in JWT if user has one
+        if (decoded.organizationId) {
+          req.user.organizationId = decoded.organizationId
+          req.user.organizationRole = decoded.organizationRole
+        }
       } catch (error) {
         // Continue without user
       }

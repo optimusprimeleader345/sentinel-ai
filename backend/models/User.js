@@ -32,6 +32,17 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'analyst', 'admin', 'manager', 'superadmin'],
     default: 'user'
   },
+  organization: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: false, // Optional for backward compatibility
+    index: true
+  },
+  organizationRole: {
+    type: String,
+    enum: ['owner', 'admin', 'member', 'viewer'],
+    default: 'member'
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -116,7 +127,9 @@ userSchema.virtual('isLocked').get(function() {
 userSchema.index({ email: 1 })
 userSchema.index({ username: 1 })
 userSchema.index({ role: 1 })
+userSchema.index({ organization: 1 }) // Organization index
 userSchema.index({ createdAt: -1 })
+userSchema.index({ organization: 1, email: 1 }) // Compound index for org-specific queries
 
 // Pre-save middleware for password hashing
 userSchema.pre('save', async function(next) {

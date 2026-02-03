@@ -1,25 +1,26 @@
 import express from 'express'
 import { getThreats, createThreat, updateThreat, deleteThreat, getGlobalThreats, lookupIOC, getHeatmap, getSeverityStats, getTrends, getThreatFeed, getMitreMatrix, getCorrelationEngine } from '../controllers/threatController.js'
 import { optionalAuth } from '../middleware/authMiddleware.js'
+import { attachOrganization } from '../middleware/tenantIsolation.js'
 
 const router = express.Router()
 
-// Existing routes
-router.get('/', optionalAuth, getThreats)
-router.get('/global', optionalAuth, getGlobalThreats)
-router.post('/', optionalAuth, createThreat)
-router.put('/:id', optionalAuth, updateThreat)
-router.delete('/:id', optionalAuth, deleteThreat)
+// Existing routes (with organization isolation)
+router.get('/', optionalAuth, attachOrganization, getThreats)
+router.get('/global', optionalAuth, getGlobalThreats) // Global threats don't need org isolation
+router.post('/', optionalAuth, attachOrganization, createThreat)
+router.put('/:id', optionalAuth, attachOrganization, updateThreat)
+router.delete('/:id', optionalAuth, attachOrganization, deleteThreat)
 
 // Threat Intelligence Center routes
-router.get('/overview', optionalAuth, getThreats)
-router.get('/heatmap', optionalAuth, getHeatmap)
-router.get('/severity-stats', optionalAuth, getSeverityStats)
-router.get('/trends', optionalAuth, getTrends)
-router.get('/lookup', optionalAuth, lookupIOC)
-router.get('/feed', optionalAuth, getThreatFeed)
-router.get('/mitre', optionalAuth, getMitreMatrix)
-router.get('/correlation', optionalAuth, getCorrelationEngine)
+router.get('/overview', optionalAuth, attachOrganization, getThreats)
+router.get('/heatmap', optionalAuth, getHeatmap) // Global data
+router.get('/severity-stats', optionalAuth, attachOrganization, getSeverityStats)
+router.get('/trends', optionalAuth, attachOrganization, getTrends)
+router.get('/lookup', optionalAuth, attachOrganization, lookupIOC)
+router.get('/feed', optionalAuth, attachOrganization, getThreatFeed)
+router.get('/mitre', optionalAuth, getMitreMatrix) // Global MITRE data
+router.get('/correlation', optionalAuth, attachOrganization, getCorrelationEngine)
 
 // Global Threat Map - Real-time aggregated threats
 router.get('/aggregate', async (req, res) => {
