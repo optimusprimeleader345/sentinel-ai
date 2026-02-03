@@ -4,8 +4,13 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import morgan from 'morgan'
 import helmet from 'helmet'
+import compression from 'compression'
 import connectDB from './config/db.js'
 import wsService from './config/websocket.js'
+import logger from './utils/logger.js'
+import { apiLimiter, authLimiter, aiLimiter, intensiveLimiter, uploadLimiter } from './middleware/rateLimiter.js'
+import { sanitizeMongo, preventHPP, xssProtection, requestSizeLimiter, securityHeaders } from './middleware/security.js'
+import { apiVersioning, getApiVersionInfo } from './middleware/apiVersioning.js'
 
 // Import routes
 import authRoutes from './routes/authRoutes.js'
@@ -58,27 +63,87 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Middleware
-app.use(helmet())
-app.use(cors({
-  origin: process.env.FRONTEND_URL || true, // Allow all origins in development
-  credentials: true,
+// Security Middleware (order matters!)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
 }))
-app.use(morgan('dev'))
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+
+app.use(securityHeaders) // Additional security headers
+app.use(cors({
+  origin: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? false : true),
+  credentials: true,
+  optionsSuccessStatus: 200
+}))
+
+// Compression middleware (should be early in the stack)
+app.use(compression())
+
+// Request size limiting (before body parsing)
+app.use(requestSizeLimiter)
+
+// Body parsing
+app.use(express.json({ limit: '10mb' }))
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Security middleware (after body parsing)
+app.use(sanitizeMongo) // Prevent NoSQL injection
+app.use(preventHPP) // Prevent HTTP Parameter Pollution
+app.use(xssProtection) // XSS protection
+
+// HTTP request logging with Winston
+app.use(morgan('combined', { stream: logger.stream }))
+
+// API Versioning middleware
+app.use(apiVersioning)
+
+// Rate limiting (apply before routes)
+app.use('/api/', apiLimiter) // General API rate limiting
+app.use('/api/auth/', authLimiter) // Stricter auth rate limiting
+app.use('/api/ai/', aiLimiter) // AI endpoint rate limiting
+app.use('/api/scan/', intensiveLimiter) // Scan endpoint rate limiting
+app.use('/api/deepfake/', uploadLimiter) // File upload rate limiting
+app.use('/api/deepfake/', intensiveLimiter) // Deepfake processing rate limiting
 
 // Connect to MongoDB (optional - works without DB)
 connectDB()
 
-// Health check route
+// Enhanced health check route
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  const health = {
+    status: 'ok',
     message: 'SentinelAI Backend API is running',
     timestamp: new Date().toISOString(),
-  })
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.npm_package_version || '1.0.0',
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB',
+      rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + 'MB'
+    },
+    services: {
+      database: 'connected', // Will be updated based on actual DB status
+      websocket: 'active'
+    }
+  }
+  res.json(health)
 })
+
+// API Version info endpoint
+app.get('/api/version', getApiVersionInfo)
+app.get('/api/v1/version', getApiVersionInfo)
 
 // API Routes
 app.use('/api/auth', authRoutes)
@@ -127,16 +192,41 @@ app.use('/behavior', behaviorRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err)
+  // Log error with Winston
+  logger.error('API Error:', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    ip: req.ip,
+    user: req.user?.userId || 'anonymous'
+  })
+
+  // Don't leak error details in production
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  
   res.status(err.status || 500).json({
+    success: false,
     message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    ...(isDevelopment && { 
+      stack: err.stack,
+      path: req.path,
+      method: req.method
+    }),
+    timestamp: new Date().toISOString()
   })
 })
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' })
+  logger.warn(`404 Not Found: ${req.method} ${req.path} from IP ${req.ip}`)
+  res.status(404).json({ 
+    success: false,
+    message: 'Route not found',
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  })
 })
 
 // Create HTTP server for socket.io integration
@@ -147,8 +237,19 @@ wsService.initialize(server)
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`🚀 SentinelAI Backend Server running on port ${PORT}`)
-  console.log(`📡 API available at http://localhost:${PORT}/api`)
-  console.log(`🔌 WebSocket available at ws://localhost:${PORT}`)
-  console.log(`💚 Health check: http://localhost:${PORT}/api/health`)
+  logger.info(`🚀 SentinelAI Backend Server running on port ${PORT}`)
+  logger.info(`📡 API available at http://localhost:${PORT}/api`)
+  logger.info(`🔌 WebSocket available at ws://localhost:${PORT}`)
+  logger.info(`💚 Health check: http://localhost:${PORT}/api/health`)
+  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+  logger.info(`📊 Rate limiting: Enabled`)
+  logger.info(`🔒 Security middleware: Active`)
+  
+  // Also log to console for development
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`🚀 SentinelAI Backend Server running on port ${PORT}`)
+    console.log(`📡 API available at http://localhost:${PORT}/api`)
+    console.log(`🔌 WebSocket available at ws://localhost:${PORT}`)
+    console.log(`💚 Health check: http://localhost:${PORT}/api/health`)
+  }
 })
