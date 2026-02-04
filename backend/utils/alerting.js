@@ -95,8 +95,12 @@ class AlertingSystem {
     // Log alert
     logger.warn('🚨 Alert Triggered', alert)
 
-    // Update system health metric
-    systemHealth.set({ component: 'alerting' }, this.calculateHealthScore())
+    // Update system health metric (async, but don't await to avoid blocking)
+    this.calculateHealthScore().then(score => {
+      systemHealth.set({ component: 'alerting' }, score)
+    }).catch(err => {
+      logger.error('Failed to update health score metric', err)
+    })
 
     // In production, you would send alerts to:
     // - Email

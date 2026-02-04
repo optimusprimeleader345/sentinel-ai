@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import compression from 'compression'
+import mongoose from 'mongoose'
 import connectDB from './config/db.js'
 import wsService from './config/websocket.js'
 import logger from './utils/logger.js'
@@ -137,25 +138,15 @@ app.use('/api/deepfake/', uploadLimiter) // File upload rate limiting
 app.use('/api/deepfake/', intensiveLimiter) // Deepfake processing rate limiting
 
 // Connect to MongoDB (optional - works without DB)
-// #region agent log:db-connect-call
-fetch('http://127.0.0.1:7242/ingest/46815614-e019-4d5e-8510-8a04a2c8d350',{
-  method:'POST',
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({
-    sessionId:'debug-session',
-    runId:'pre-fix',
-    hypothesisId:'H1',
-    location:'server.js:139',
-    message:'About to call connectDB',
-    data:{mongoUri:process.env.MONGO_URI || 'mongodb://localhost:27017/sentinelai'},
-    timestamp:Date.now()
-  })
-}).catch(()=>{});
-// #endregion agent log:db-connect-call
 connectDB()
 
 // Enhanced health check route
 app.get('/api/health', (req, res) => {
+  // Check actual MongoDB connection status
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 
+                   mongoose.connection.readyState === 2 ? 'connecting' : 
+                   mongoose.connection.readyState === 3 ? 'disconnecting' : 'disconnected'
+  
   const health = {
     status: 'ok',
     message: 'SentinelAI Backend API is running',
@@ -169,7 +160,9 @@ app.get('/api/health', (req, res) => {
       rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + 'MB'
     },
     services: {
-      database: 'connected', // Will be updated based on actual DB status
+      database: dbStatus,
+      databaseHost: mongoose.connection.host || 'not connected',
+      databaseName: mongoose.connection.name || 'not connected',
       websocket: 'active'
     }
   }

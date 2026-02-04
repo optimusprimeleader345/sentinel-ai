@@ -42,16 +42,29 @@ export const initSentry = () => {
 
 /**
  * Sentry Error Handler Middleware
+ * Note: In Sentry v10+, use setupExpressErrorHandler instead
  */
-export const sentryErrorHandler = Sentry.Handlers.errorHandler()
+export const sentryErrorHandler = (err, req, res, next) => {
+  Sentry.captureException(err)
+  next(err)
+}
 
 /**
  * Sentry Request Handler Middleware
+ * Note: In Sentry v10+, request context is automatically captured
  */
-export const sentryRequestHandler = Sentry.Handlers.requestHandler({
-  user: ['id', 'email', 'organizationId'],
-  ip: true,
-})
+export const sentryRequestHandler = (req, res, next) => {
+  // Set user context if available
+  if (req.user) {
+    Sentry.setUser({
+      id: req.user.id || req.user.userId,
+      email: req.user.email,
+      username: req.user.username,
+      organizationId: req.user.organizationId
+    })
+  }
+  next()
+}
 
 /**
  * Capture exception manually
