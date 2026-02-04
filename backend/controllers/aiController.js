@@ -62,8 +62,6 @@ export const analyze = async (req, res) => {
   }
 }
 
-import Conversation from '../models/Conversation.js'
-
 export const botChat = async (req, res) => {
   try {
     const { message, conversationId } = req.body

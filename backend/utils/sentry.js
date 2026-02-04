@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/node'
-import { ProfilingIntegration } from '@sentry/profiling-node'
 
 /**
  * Sentry Error Tracking Setup
@@ -16,11 +15,7 @@ export const initSentry = () => {
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || 'development',
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0, // 10% in production, 100% in dev
-    profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-    integrations: [
-      new ProfilingIntegration(),
-    ],
-    // Set sample rate for profiling
+    // Set sample rate for tracing
     beforeSend(event, hint) {
       // Filter out sensitive data
       if (event.request) {

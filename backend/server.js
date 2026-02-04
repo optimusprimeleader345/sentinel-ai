@@ -54,12 +54,14 @@ import autonomousSecurityRoutes from './routes/autonomousSecurityRoutes.js'
 import quantumCryptographyRoutes from './routes/quantumCryptographyRoutes.js'
 import aiVulnerabilityRoutes from './routes/aiVulnerabilityRoutes.js'
 import emergencyRoutes from './routes/emergencyRoutes.js'
-import securityControlRoutes from './routes/securityControlRoutes.js'
-import threatPrioritizationRoutes from './routes/threatPrioritizationRoutes.js'
-import riskScoringRoutes from './routes/riskScoringRoutes.js'
-import complianceDriftRoutes from './routes/complianceDriftRoutes.js'
-import socLoadBalancerRoutes from './routes/socLoadBalancerRoutes.js'
-import executiveBriefRoutes from './routes/executiveBriefRoutes.js'
+// NOTE: Super Admin security control routes disabled due to CommonJS/ESM mismatch
+// import securityControlRoutes from './routes/securityControlRoutes.js'
+// NOTE: Advanced Super Admin routes temporarily disabled due to CommonJS/ESM mismatch
+// import threatPrioritizationRoutes from './routes/threatPrioritizationRoutes.js'
+// import riskScoringRoutes from './routes/riskScoringRoutes.js'
+// import complianceDriftRoutes from './routes/complianceDriftRoutes.js'
+// import socLoadBalancerRoutes from './routes/socLoadBalancerRoutes.js'
+// import executiveBriefRoutes from './routes/executiveBriefRoutes.js'
 import organizationRoutes from './routes/organizationRoutes.js'
 import metricsRoutes from './routes/metricsRoutes.js'
 
@@ -135,6 +137,21 @@ app.use('/api/deepfake/', uploadLimiter) // File upload rate limiting
 app.use('/api/deepfake/', intensiveLimiter) // Deepfake processing rate limiting
 
 // Connect to MongoDB (optional - works without DB)
+// #region agent log:db-connect-call
+fetch('http://127.0.0.1:7242/ingest/46815614-e019-4d5e-8510-8a04a2c8d350',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({
+    sessionId:'debug-session',
+    runId:'pre-fix',
+    hypothesisId:'H1',
+    location:'server.js:139',
+    message:'About to call connectDB',
+    data:{mongoUri:process.env.MONGO_URI || 'mongodb://localhost:27017/sentinelai'},
+    timestamp:Date.now()
+  })
+}).catch(()=>{});
+// #endregion agent log:db-connect-call
 connectDB()
 
 // Enhanced health check route
@@ -202,12 +219,12 @@ app.use('/api/autonomous-security', autonomousSecurityRoutes)  // AI Autonomous 
 app.use('/api/quantum-cryptography', quantumCryptographyRoutes)  // Quantum-Resistant Cryptography Suite
 app.use('/api/ai-vulnerability', aiVulnerabilityRoutes)  // AI-Powered Vulnerability Assessment
 app.use('/api/emergency', emergencyRoutes)  // National Emergency Response System
-app.use('/api/security-control', securityControlRoutes)  // Super Admin Security Control System
-app.use('/api/v1/superadmin/threat-prioritization', threatPrioritizationRoutes)  // AI Threat Prioritization Engine
-app.use('/api/v1/superadmin/risk-scoring', riskScoringRoutes)  // Organization Risk Scoring Engine
-app.use('/api/v1/superadmin/compliance-drift', complianceDriftRoutes)  // AI Compliance Drift Detection
-app.use('/api/v1/superadmin/soc-load-balancer', socLoadBalancerRoutes)  // Autonomous SOC Load Balancer
-app.use('/api/v1/superadmin/executive-brief', executiveBriefRoutes)  // AI Executive Brief Generator
+// app.use('/api/security-control', securityControlRoutes)  // Super Admin Security Control System
+// app.use('/api/v1/superadmin/threat-prioritization', threatPrioritizationRoutes)  // AI Threat Prioritization Engine
+// app.use('/api/v1/superadmin/risk-scoring', riskScoringRoutes)  // Organization Risk Scoring Engine
+// app.use('/api/v1/superadmin/compliance-drift', complianceDriftRoutes)  // AI Compliance Drift Detection
+// app.use('/api/v1/superadmin/soc-load-balancer', socLoadBalancerRoutes)  // Autonomous SOC Load Balancer
+// app.use('/api/v1/superadmin/executive-brief', executiveBriefRoutes)  // AI Executive Brief Generator
 app.use('/behavior', behaviorRoutes)
 
 // Sentry error handler (must be before other error handlers)
