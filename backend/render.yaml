@@ -1,7 +1,7 @@
 services:
   - type: web
     name: sentinelai-backend
-    env: node
+    runtime: node
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -17,3 +17,23 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ABUSE_IPDB_KEY
+        sync: false
+      - key: IPQUALITYSCORE_KEY
+        sync: false
+      - key: EMAIL_SCANNER_API_KEY
+        sync: false
+      - key: URL_SCANNER_API_KEY
+        sync: false
+      - key: DEEPFAKE_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: "info"
+      - key: ENABLE_METRICS
+        value: "true"
+      - key: WEBSOCKET_ENABLED
+        value: "true"
+      - key: AUDIT_LOG_ENABLED
+        value: "true"
